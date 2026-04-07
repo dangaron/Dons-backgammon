@@ -5,7 +5,7 @@
 
 import type { SolitaireState, SolitaireMove } from './types';
 import { getLegalMoves } from './moves';
-import { rankOf, colorOf, suitIndex } from './deck';
+import { rankOf, suitIndex } from './deck';
 
 /**
  * Suggest the best move from the current state.

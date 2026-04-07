@@ -2,7 +2,7 @@
  * SVG playing card renderer. Theme-aware via CSS variables.
  */
 
-import React, { memo } from 'react';
+import { memo } from 'react';
 import type { CardId } from '../engine/types';
 import { rankOf, suitOf, colorOf, rankLabel, suitSymbol } from '../engine/deck';
 

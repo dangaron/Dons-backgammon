@@ -11,7 +11,6 @@ import {
   serializeState,
   deserializeState,
 } from '../engine/game';
-import { getLegalMoves } from '../engine/moves';
 import { suggestMove } from '../engine/solver';
 
 const STORAGE_KEY = 'solitaire-game-v1';

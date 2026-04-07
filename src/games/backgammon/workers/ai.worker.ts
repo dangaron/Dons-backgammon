@@ -1,30 +1,35 @@
 /**
  * AI Web Worker.
- * Receives: { board: number[], dice: number[] }
- * Responds: { move: Move[] } or { error: string }
+ * Receives: AIRequest with board, dice, difficulty, and optional type.
+ * Responds: AIResponse with move, score, and optional error.
  *
  * Runs on a separate thread — never blocks the main thread.
  */
 
-import { chooseBestMove } from '../engine/ai';
+import { chooseBestMove, type AIDifficulty } from '../engine/ai';
 import type { Board, Move } from '../engine/types';
 
 export interface AIRequest {
+  type?: 'move' | 'hint';
   board: Board;
   dice: number[];
+  difficulty?: AIDifficulty;
 }
 
 export interface AIResponse {
   move: Move | null;
+  score?: number;
   error?: string;
 }
 
 self.onmessage = (e: MessageEvent<AIRequest>) => {
   try {
-    const { board, dice } = e.data;
-    const result = chooseBestMove(board, dice, 50);
+    const { board, dice, difficulty = 'medium', type = 'move' } = e.data;
+    const maxMs = difficulty === 'expert' ? 200 : 50;
+    const result = chooseBestMove(board, dice, maxMs, difficulty);
     const response: AIResponse = {
-      move: result?.move ?? null,
+      move: result.move?.move ?? null,
+      score: result.score,
     };
     self.postMessage(response);
   } catch (err) {

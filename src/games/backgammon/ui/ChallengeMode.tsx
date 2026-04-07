@@ -122,9 +122,9 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
   }, [currentIdx, filter]);
 
   const checkFinalResult = useCallback((finalBoard: number[], ch: Challenge) => {
-    const aiResult = chooseBestMove(ch.board, ch.dice, 100);
-    if (!aiResult) return;
-    const correct = boardKey(finalBoard) === boardKey(aiResult.resultBoard);
+    const { move: aiMove } = chooseBestMove(ch.board, ch.dice, 100);
+    if (!aiMove) return;
+    const correct = boardKey(finalBoard) === boardKey(aiMove.resultBoard);
     setResult(correct ? 'correct' : 'incorrect');
 
     // Record in daily challenge system

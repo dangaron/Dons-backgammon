@@ -76,7 +76,8 @@ export default function App() {
     setShowNewGame(true);
   };
 
-  const handleStartGame = (matchLength: number, cubeEnabled: boolean) => {
+  const handleStartGame = (matchLength: number, cubeEnabled: boolean, difficulty?: 'easy' | 'medium' | 'hard' | 'expert') => {
+    if (difficulty) useGameStore.getState().setAIDifficulty(difficulty);
     startNewGame('vs-ai', matchLength, cubeEnabled);
     setShowNewGame(false);
     setView('backgammon-play');
@@ -209,12 +210,20 @@ export default function App() {
   );
 }
 
+const DIFFICULTIES = [
+  { key: 'easy' as const, label: '😊 Easy', desc: 'Learning the ropes' },
+  { key: 'medium' as const, label: '🎯 Medium', desc: 'Solid challenge' },
+  { key: 'hard' as const, label: '🔥 Hard', desc: 'Tighter play' },
+  { key: 'expert' as const, label: '🧠 Expert', desc: '2-ply lookahead' },
+];
+
 function NewGameModal({ onStart, onCancel }: {
-  onStart: (matchLength: number, cubeEnabled: boolean) => void;
+  onStart: (matchLength: number, cubeEnabled: boolean, difficulty: 'easy' | 'medium' | 'hard' | 'expert') => void;
   onCancel: () => void;
 }) {
   const [matchLength, setMatchLength] = useState(1);
   const [cubeEnabled, setCubeEnabled] = useState(true);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'expert'>('medium');
 
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
@@ -233,6 +242,43 @@ function NewGameModal({ onStart, onCancel }: {
               {n}
             </button>
           ))}
+        </div>
+
+        {/* AI Difficulty */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 800, color: 'var(--text-muted)',
+            textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
+          }}>
+            AI Difficulty
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d.key}
+                onClick={() => setDifficulty(d.key)}
+                style={{
+                  padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: difficulty === d.key
+                    ? 'linear-gradient(180deg, var(--accent) 0%, #3ab5ad 100%)'
+                    : 'var(--surface-2)',
+                  color: difficulty === d.key ? 'var(--bg)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font)', fontWeight: 700, fontSize: 13,
+                  textAlign: 'left',
+                  transition: 'all 0.15s',
+                  boxShadow: difficulty === d.key ? 'var(--btn-shadow-sm)' : 'none',
+                }}
+              >
+                <div>{d.label}</div>
+                <div style={{
+                  fontSize: 9, fontWeight: 600, marginTop: 1,
+                  opacity: difficulty === d.key ? 0.8 : 0.6,
+                }}>
+                  {d.desc}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={{
@@ -265,7 +311,7 @@ function NewGameModal({ onStart, onCancel }: {
         </div>
 
         <button className="action-btn primary" style={{ width: '100%' }}
-          onClick={() => onStart(matchLength, cubeEnabled)}>
+          onClick={() => onStart(matchLength, cubeEnabled, difficulty)}>
           🚀 Start Game
         </button>
       </div>

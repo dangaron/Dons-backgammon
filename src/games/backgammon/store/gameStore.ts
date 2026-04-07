@@ -19,6 +19,7 @@ import {
 import { getLegalMoves, getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
 import { BAR, HOME, flipBoard } from '../engine/board';
 import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
+import type { AIDifficulty } from '../engine/ai';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 
 const STORAGE_KEY = 'backgammon-game-v2';
@@ -56,9 +57,18 @@ interface GameStore {
   turnUndoStack: Array<{ board: number[]; dice: number[] }>;
   /** Whether the player has finished moving (all dice used or no legal moves) */
   turnComplete: boolean;
+  /** AI difficulty level */
+  aiDifficulty: AIDifficulty;
+  /** Hint: AI's recommended move */
+  hintMove: import('../engine/types').Move | null;
+  hintScore: number | null;
+  showingHint: boolean;
 
   // Actions
   startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean) => void;
+  setAIDifficulty: (difficulty: AIDifficulty) => void;
+  requestHint: () => void;
+  clearHint: () => void;
   performOpeningRoll: () => void;
   rollDiceAction: () => void;
   selectPoint: (point: number) => void;
@@ -125,6 +135,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openingWinner: null,
   turnUndoStack: [],
   turnComplete: false,
+  aiDifficulty: 'medium',
+  hintMove: null,
+  hintScore: null,
+  showingHint: false,
+
+  setAIDifficulty: (difficulty: AIDifficulty) => set({ aiDifficulty: difficulty }),
+
+  requestHint: () => {
+    const { gameState, aiDifficulty } = get();
+    if (gameState.turnPhase !== 'move' || gameState.currentPlayer !== 0) return;
+    set({ showingHint: true });
+
+    const worker = getAIWorker();
+    const request: AIRequest = {
+      type: 'hint',
+      board: gameState.board,
+      dice: gameState.dice,
+      difficulty: aiDifficulty,
+    };
+
+    const handler = (e: MessageEvent<AIResponse>) => {
+      worker.removeEventListener('message', handler);
+      set({ hintMove: e.data.move, hintScore: e.data.score ?? null });
+    };
+    worker.addEventListener('message', handler);
+    worker.postMessage(request);
+  },
+
+  clearHint: () => set({ hintMove: null, hintScore: null, showingHint: false }),
 
   startNewGame: (mode = 'vs-ai', matchLength = 1, cubeEnabled = true) => {
     const seed = generateSeed();
@@ -299,6 +338,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   makeSingleDieMove: (from: number, to: number, die: number) => {
     const { gameState, prng } = get();
+    // Clear hint when player makes a move
+    if (get().showingHint) set({ hintMove: null, hintScore: null, showingHint: false });
     const dieMove = { from, to, die };
     const newBoard = applySingleDieMove(gameState.board, dieMove);
 
@@ -480,11 +521,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   triggerAIMove: () => {
-    const { gameState } = get();
-    set({ isAIThinking: true });
+    const { gameState, aiDifficulty } = get();
+    set({ isAIThinking: true, hintMove: null, hintScore: null, showingHint: false });
 
     const worker = getAIWorker();
-    const request: AIRequest = { board: gameState.board, dice: gameState.dice };
+    const request: AIRequest = { board: gameState.board, dice: gameState.dice, difficulty: aiDifficulty };
 
     worker.onmessage = (e: MessageEvent<AIResponse>) => {
       const { move, error } = e.data;
