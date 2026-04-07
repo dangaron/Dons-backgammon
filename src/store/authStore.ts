@@ -92,22 +92,57 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const popup = window.open(data.url, 'google-auth', 'width=500,height=600,popup=yes');
       if (!popup) return { error: 'Popup blocked. Please allow popups for this site.' };
 
-      // Poll for the popup to close (user completed or cancelled auth)
+      // Listen for auth state change from the popup (via shared localStorage)
       return new Promise<{ error?: string }>((resolve) => {
-        const interval = setInterval(async () => {
+        let resolved = false;
+
+        // Method 1: Listen for storage events (popup writes session to localStorage)
+        const handleStorage = async () => {
+          if (resolved) return;
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            resolved = true;
+            window.removeEventListener('storage', handleStorage);
+            clearInterval(pollInterval);
+            set({ user: session.user, session });
+            await get().fetchProfile();
+            resolve({});
+          }
+        };
+        window.addEventListener('storage', handleStorage);
+
+        // Method 2: Poll — check both popup closed state and session
+        const pollInterval = setInterval(async () => {
+          if (resolved) { clearInterval(pollInterval); return; }
+
+          // Try refreshing the session from storage
+          const { data: { session } } = await supabase.auth.refreshSession();
+          if (session?.user) {
+            resolved = true;
+            window.removeEventListener('storage', handleStorage);
+            clearInterval(pollInterval);
+            set({ user: session.user, session });
+            await get().fetchProfile();
+            resolve({});
+            return;
+          }
+
           if (popup.closed) {
-            clearInterval(interval);
-            // Check if auth succeeded by refreshing the session
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              set({ user: session.user, session });
-              await get().fetchProfile();
-              resolve({});
-            } else {
-              resolve({ error: 'Sign in was cancelled' });
+            clearInterval(pollInterval);
+            window.removeEventListener('storage', handleStorage);
+            if (!resolved) {
+              // One last try
+              const { data: { session: lastTry } } = await supabase.auth.refreshSession();
+              if (lastTry?.user) {
+                set({ user: lastTry.user, session: lastTry });
+                await get().fetchProfile();
+                resolve({});
+              } else {
+                resolve({ error: 'Sign in was cancelled' });
+              }
             }
           }
-        }, 500);
+        }, 1000);
       });
     } catch (err) {
       return { error: err instanceof Error ? err.message : 'Sign in failed' };
