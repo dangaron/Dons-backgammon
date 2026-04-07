@@ -21,8 +21,16 @@ Multi-game platform. Currently includes Backgammon and Solitaire (Klondike), wit
 - Unlimited undo, scoring with time bonus
 - Stats tracking (games played/won, best time, win streaks)
 
+### Yahtzee
+- 5 dice with click-to-hold interaction
+- Full 13-category scorecard (upper section with 63+ bonus, lower section)
+- Yahtzee bonus (100 points per extra Yahtzee)
+- AI opponent with Monte Carlo simulation (Web Worker)
+- Pass & Play local multiplayer
+- Side-by-side scorecard with potential score preview
+- localStorage persistence
+
 ### Coming Soon
-- **Yahtzee**: 5-dice, 13 categories, AI opponent, online multiplayer
 - **Bridge**: Bidding, trick-taking, AI partners, 4-player multiplayer
 
 ## Architecture
@@ -39,6 +47,11 @@ src/
       engine/       ← Pure TS (deck, moves, game state, solver/hints)
       store/        ← Zustand store (game state, undo, stats)
       ui/           ← SVG cards, board layout, lobby
+    yahtzee/
+      engine/       ← Pure TS (dice, scoring, game state, AI)
+      store/        ← Zustand store (game state, AI worker integration)
+      ui/           ← SVG dice, scorecard, board, lobby
+      workers/      ← AI Web Worker (Monte Carlo evaluation)
   shared/
     engine/         ← GameType enum, shared interfaces
     store/          ← authStore, multiplayerStore (Supabase)
