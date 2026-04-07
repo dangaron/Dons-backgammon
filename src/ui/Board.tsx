@@ -903,7 +903,7 @@ export function Board({ onChallenges, onNewGame, onDashboard }: {
 
         {onDashboard && (
           <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
-            onClick={onDashboard}>Games</button>
+            onClick={onDashboard}>Online</button>
         )}
         {onChallenges && (
           <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}

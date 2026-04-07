@@ -3,26 +3,25 @@ import { Board } from './ui/Board';
 import { ChallengeMode } from './ui/ChallengeMode';
 import { Dashboard } from './ui/Dashboard';
 import { AuthModal } from './ui/AuthModal';
+import { HomeScreen } from './ui/HomeScreen';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
 
-type AppView = 'dashboard' | 'game' | 'challenges' | 'online-game';
+type AppView = 'home' | 'dashboard' | 'game' | 'challenges';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 export default function App() {
-  const [view, setView] = useState<AppView>('game'); // default to local game for backward compat
+  const [view, setView] = useState<AppView>('home');
   const [showNewGame, setShowNewGame] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const { startNewGame, gameState } = useGameStore();
   const { initialize, initialized, user } = useAuthStore();
 
-  // Initialize auth on mount
   useEffect(() => {
     initialize();
-    // Register service worker for push notifications
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
@@ -49,7 +48,6 @@ export default function App() {
     setView('game');
   };
 
-  // Show loading while auth initializes (only if Supabase is configured)
   if (!initialized && isSupabaseConfigured()) {
     return (
       <div className="app" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -60,11 +58,21 @@ export default function App() {
 
   return (
     <div className="app">
+      {view === 'home' && (
+        <HomeScreen
+          onPlayAI={() => setView('game')}
+          onNewMultiplayer={() => setView('dashboard')}
+          onChallenges={() => setView('challenges')}
+          onSignIn={() => setShowAuth(true)}
+          onDashboard={() => setView('dashboard')}
+        />
+      )}
+
       {view === 'dashboard' && (
         <Dashboard
           onPlayAI={() => setView('game')}
           onOpenGame={(_gameId) => {
-            // TODO: open multiplayer game view
+            // TODO: open specific multiplayer game
             setView('game');
           }}
           onSignIn={() => setShowAuth(true)}
@@ -75,7 +83,10 @@ export default function App() {
         <Board
           onChallenges={() => setView('challenges')}
           onNewGame={handleNewGameClick}
-          onDashboard={user ? () => setView('dashboard') : undefined}
+          onDashboard={() => {
+            if (user) setView('dashboard');
+            else setView('home');
+          }}
         />
       )}
 

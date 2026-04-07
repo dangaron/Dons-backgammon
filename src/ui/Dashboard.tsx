@@ -49,8 +49,8 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
             </div>
           </div>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', letterSpacing: 1 }}>
-          BACKGAMMON
+        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: 1 }}>
+          DON'S BACKGAMMON
         </div>
         <div style={{ width: 60 }} />
       </div>
