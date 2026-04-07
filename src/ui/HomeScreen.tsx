@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { useTheme } from '../lib/useTheme';
 import { isPushSupported, subscribeToPush, isPushSubscribed, unsubscribeFromPush } from '../lib/pushNotifications';
 
 interface HomeScreenProps {
@@ -17,6 +18,7 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboard, onSignIn }: HomeScreenProps) {
   const { user, profile } = useAuthStore();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
 
   return (
@@ -59,20 +61,26 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
         {user ? (
           <>
             <GameCard
-              emoji="🤖" title="Play vs AI"
-              subtitle="Challenge the computer"
+              emoji="🤖" title="Play vs Computer"
+              subtitle="Practice against the AI"
               onClick={onPlayAI}
               color="var(--player)"
             />
             <GameCard
-              emoji="👥" title="Play a Friend"
-              subtitle="Create or join a match"
+              emoji="👥" title="Play vs Friend"
+              subtitle="Invite a friend with a code"
               onClick={onNewMultiplayer}
               color="var(--accent)"
             />
             <GameCard
-              emoji="🧩" title="Puzzles"
-              subtitle="Find the best move"
+              emoji="🌍" title="Play vs Random Opponent"
+              subtitle="Get matched with someone online"
+              onClick={onNewMultiplayer}
+              color="#8b5cf6"
+            />
+            <GameCard
+              emoji="🧩" title="Solo Challenges"
+              subtitle="Find the best move in tricky positions"
               onClick={onChallenges}
               color="var(--hit)"
             />
@@ -83,26 +91,27 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
           </>
         ) : (
           <>
-            <GameCard
-              emoji="🤖" title="Play vs AI"
-              subtitle="Jump right in — no sign up needed"
-              onClick={onPlayAI}
-              color="var(--player)"
-            />
-            <GameCard
-              emoji="🧩" title="Puzzles"
-              subtitle="Test your backgammon brain"
-              onClick={onChallenges}
-              color="var(--hit)"
-            />
             {isSupabaseConfigured() && (
               <GameCard
-                emoji="👥" title="Play Online"
-                subtitle="Sign in to challenge friends"
+                emoji="👤" title="Sign In"
+                subtitle="Play online, track your stats, challenge friends"
                 onClick={onSignIn}
                 color="var(--accent)"
               />
             )}
+            <button
+              onClick={onPlayAI}
+              style={{
+                width: '100%', padding: '14px 0',
+                background: 'none', border: 'none',
+                color: 'var(--text-muted)', fontSize: 13,
+                cursor: 'pointer', fontFamily: 'var(--font)',
+                textDecoration: 'underline',
+                textUnderlineOffset: 3,
+              }}
+            >
+              Play without signing in (solo only)
+            </button>
           </>
         )}
       </div>
@@ -121,6 +130,19 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
           />
         </div>
       )}
+
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          marginTop: 24, background: 'none', border: 'none',
+          color: 'var(--text-dim)', cursor: 'pointer', fontSize: 12,
+          fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 6,
+        }}
+      >
+        {theme === 'light' ? '🌙' : '☀️'}
+        {theme === 'light' ? 'Dark mode' : 'Light mode'}
+      </button>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>

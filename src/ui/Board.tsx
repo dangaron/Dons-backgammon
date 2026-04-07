@@ -10,32 +10,12 @@
  * Opponent (AI) = coral checkers, moves bottom-right -> top-right.
  */
 
-import React, { memo, useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import React, { memo, useCallback, useMemo, useState, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { BAR, HOME, OPP_BAR, pipCount, opponentPipCount, unflopBoard } from '../engine/board';
 import { applySingleDieMove } from '../engine/moves';
 
-// ── Theme (stored in cookie) ─────────────────────────────────────────────────
-function getThemeCookie(): 'dark' | 'light' {
-  const match = document.cookie.match(/(?:^|; )bg-theme=(dark|light)/);
-  return (match?.[1] as 'dark' | 'light') || 'light';
-}
-
-function setThemeCookie(theme: 'dark' | 'light') {
-  document.cookie = `bg-theme=${theme};path=/;max-age=${365 * 24 * 60 * 60};SameSite=Lax`;
-}
-
-function useTheme() {
-  const [theme, setTheme] = useState<'dark' | 'light'>(getThemeCookie);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    setThemeCookie(theme);
-  }, [theme]);
-
-  const toggle = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
-  return { theme, toggle };
-}
+import { useTheme } from '../lib/useTheme';
 
 // ── Dimensions ───────────────────────────────────────────────────────────────
 const BW = 680;
@@ -263,8 +243,8 @@ interface DragState {
 }
 
 // ── Main Board Component ─────────────────────────────────────────────────────
-export function Board({ onChallenges, onNewGame, onDashboard }: {
-  onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void;
+export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit }: {
+  onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void; onQuit?: () => void;
 } = {}) {
   const { theme, toggle: toggleTheme } = useTheme();
   const c = THEMES[theme];
@@ -337,6 +317,16 @@ export function Board({ onChallenges, onNewGame, onDashboard }: {
   }, [selectedPoint, legalDestinations, dice, board, turnPhase, currentPlayer, destMap]);
 
   // ── Drag and Drop ──
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+
+  const handleQuit = useCallback(() => {
+    if (turnPhase !== 'game-over') {
+      setShowQuitConfirm(true);
+    } else if (onQuit) {
+      onQuit();
+    }
+  }, [turnPhase, onQuit]);
+
   const svgRef = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
@@ -508,11 +498,11 @@ export function Board({ onChallenges, onNewGame, onDashboard }: {
               <div className="player-score">{matchScore[1]}</div>
             </div>
           </div>
-          {/* New Game button — top right */}
-          {onNewGame && (
-            <button className="action-btn secondary" onClick={onNewGame}
+          {/* Quit button — top right */}
+          {onQuit && (
+            <button className="action-btn secondary" onClick={handleQuit}
               style={{ fontSize: 11, height: 28, padding: '0 10px', whiteSpace: 'nowrap' }}>
-              + New
+              Quit
             </button>
           )}
         </div>
@@ -961,6 +951,26 @@ export function Board({ onChallenges, onNewGame, onDashboard }: {
             </div>
             <button className="action-btn primary" style={{ marginTop: 16, width: '100%' }}
               onClick={() => setShowVerifyDialog(false)}>Done</button>
+          </div>
+        </div>
+      )}
+
+      {/* Quit confirmation dialog */}
+      {showQuitConfirm && (
+        <div className="overlay-backdrop" onClick={() => setShowQuitConfirm(false)}>
+          <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+            <h2>End current game?</h2>
+            <p>Your game in progress will be lost.</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="action-btn primary" style={{ flex: 1 }}
+                onClick={() => setShowQuitConfirm(false)}>
+                Return to Game
+              </button>
+              <button className="action-btn secondary" style={{ flex: 1 }}
+                onClick={() => { setShowQuitConfirm(false); onQuit?.(); }}>
+                Exit to Home
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -87,6 +87,7 @@ export default function App() {
             if (user) setView('dashboard');
             else setView('home');
           }}
+          onQuit={() => setView('home')}
         />
       )}
 
