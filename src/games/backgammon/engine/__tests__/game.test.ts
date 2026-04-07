@@ -4,7 +4,8 @@ import {
   forcedPass, offerDouble, acceptDouble, rejectDouble,
   canOfferDouble, serializeState, deserializeState,
 } from '../game';
-import { HOME, BAR, OPP_BAR } from '../board';
+import { HOME, OPP_BAR } from '../board';
+import type { Player } from '../types';
 
 describe('createInitialGameState', () => {
   it('creates a valid initial state', () => {
@@ -90,7 +91,7 @@ describe('applyMoveToState', () => {
       dice: [1],
       turnPhase: 'move' as const,
       diceRolled: true,
-      doublingCube: { value: 4, owner: 0, offeredBy: null },
+      doublingCube: { value: 4, owner: 0 as Player, offeredBy: null },
     };
     const move = [{ from: 0, to: HOME, die: 1 }];
     const next = applyMoveToState(winState, move);

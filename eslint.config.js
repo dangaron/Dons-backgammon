@@ -20,10 +20,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
-  // Engine isolation rule: src/engine/ must NOT import from src/ui/ or src/store/
+  // Engine isolation rule: game engines must NOT import from UI or store.
   // This ensures the rules engine can run in Deno (Supabase Edge Functions) unchanged.
   {
-    files: ['src/engine/**/*.ts'],
+    files: ['src/games/*/engine/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

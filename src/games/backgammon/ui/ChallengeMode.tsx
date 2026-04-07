@@ -10,7 +10,7 @@ import { chooseBestMove } from '../engine/ai';
 import { boardKey, BAR, OPP_BAR } from '../engine/board';
 import { getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
 import type { DieMove } from '../engine/types';
-import { recordChallengeResult } from '../lib/dailyChallenges';
+import { recordChallengeResult } from '../../../shared/lib/dailyChallenges';
 
 // ── Reuse main board dimensions & geometry ───────────────────────────────────
 const BW = 680;

@@ -6,8 +6,8 @@
  * Win the day by scoring 600+ out of max possible.
  */
 
-import { CHALLENGES } from '../engine/challenges';
-import type { Challenge } from '../engine/challenges';
+import { CHALLENGES } from '../../games/backgammon/engine/challenges';
+import type { Challenge } from '../../games/backgammon/engine/challenges';
 
 export interface DailyChallenge {
   challenge: Challenge;

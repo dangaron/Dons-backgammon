@@ -18,7 +18,7 @@ import {
 } from '../engine/game';
 import { getLegalMoves, getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
 import { BAR, HOME, flipBoard } from '../engine/board';
-import { Mulberry32, generateSeed } from '../prng/mulberry32';
+import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 
 const STORAGE_KEY = 'backgammon-game-v2';

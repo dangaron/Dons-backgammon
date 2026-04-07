@@ -15,7 +15,7 @@ import { useGameStore } from '../store/gameStore';
 import { BAR, HOME, OPP_BAR, pipCount, opponentPipCount, unflopBoard } from '../engine/board';
 import { applySingleDieMove } from '../engine/moves';
 
-import { useTheme } from '../lib/useTheme';
+import { useTheme } from '../../../shared/lib/useTheme';
 
 // ── Dimensions ───────────────────────────────────────────────────────────────
 const BW = 680;

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Board } from './ui/Board';
-import { ChallengeMode } from './ui/ChallengeMode';
-import { ChallengeListScreen } from './ui/ChallengeListScreen';
-import { Dashboard } from './ui/Dashboard';
-import { AuthModal } from './ui/AuthModal';
-import { HomeScreen } from './ui/HomeScreen';
-import { SettingsScreen } from './ui/SettingsScreen';
-import { useGameStore } from './store/gameStore';
-import { useAuthStore } from './store/authStore';
-import { isSupabaseConfigured } from './lib/supabase';
-import { getDailyChallenges } from './lib/dailyChallenges';
+import { Board } from './games/backgammon/ui/Board';
+import { ChallengeMode } from './games/backgammon/ui/ChallengeMode';
+import { ChallengeListScreen } from './games/backgammon/ui/ChallengeListScreen';
+import { Dashboard } from './shared/ui/Dashboard';
+import { AuthModal } from './shared/ui/AuthModal';
+import { HomeScreen } from './shared/ui/HomeScreen';
+import { SettingsScreen } from './shared/ui/SettingsScreen';
+import { useGameStore } from './games/backgammon/store/gameStore';
+import { useAuthStore } from './shared/store/authStore';
+import { isSupabaseConfigured } from './shared/lib/supabase';
+import { getDailyChallenges } from './shared/lib/dailyChallenges';
 
 type AppView = 'home' | 'dashboard' | 'game' | 'challenge-list' | 'challenge-play' | 'settings';
 

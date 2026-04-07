@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   getDailyChallenges, loadDailyProgress, getMaxScore, WIN_SCORE,
   type DailyProgress,
-} from '../lib/dailyChallenges';
+} from '../../../shared/lib/dailyChallenges';
 import { ArrowLeft, Trophy, Check } from 'lucide-react';
 
 interface ChallengeListScreenProps {

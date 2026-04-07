@@ -4,8 +4,8 @@
 
 import { supabase } from './supabase';
 import type { Game } from './database.types';
-import { INITIAL_BOARD } from '../engine/board';
-import { generateSeed } from '../prng/mulberry32';
+import { INITIAL_BOARD } from '../../games/backgammon/engine/board';
+import { generateSeed } from '../../prng/mulberry32';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** Generate a short invite code */
