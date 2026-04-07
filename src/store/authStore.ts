@@ -92,54 +92,45 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const popup = window.open(data.url, 'google-auth', 'width=500,height=600,popup=yes');
       if (!popup) return { error: 'Popup blocked. Please allow popups for this site.' };
 
-      // Listen for auth state change from the popup (via shared localStorage)
+      // Listen for postMessage from the popup with the session tokens
       return new Promise<{ error?: string }>((resolve) => {
         let resolved = false;
 
-        // Method 1: Listen for storage events (popup writes session to localStorage)
-        const handleStorage = async () => {
+        const handleMessage = async (event: MessageEvent) => {
           if (resolved) return;
-          const { data: { session } } = await supabase.auth.getSession();
+          if (event.origin !== window.location.origin) return;
+          if (event.data?.type !== 'supabase-auth') return;
+
+          resolved = true;
+          window.removeEventListener('message', handleMessage);
+          clearInterval(pollInterval);
+
+          // Set the session in the parent's Supabase client
+          const { access_token, refresh_token } = event.data.session;
+          const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
           if (session?.user) {
-            resolved = true;
-            window.removeEventListener('storage', handleStorage);
-            clearInterval(pollInterval);
             set({ user: session.user, session });
             await get().fetchProfile();
             resolve({});
+          } else {
+            resolve({ error: sessionError?.message || 'Failed to establish session' });
           }
         };
-        window.addEventListener('storage', handleStorage);
 
-        // Method 2: Poll — check both popup closed state and session
-        const pollInterval = setInterval(async () => {
+        window.addEventListener('message', handleMessage);
+
+        // Fallback: poll for popup close (user cancelled)
+        const pollInterval = setInterval(() => {
           if (resolved) { clearInterval(pollInterval); return; }
-
-          // Try refreshing the session from storage
-          const { data: { session } } = await supabase.auth.refreshSession();
-          if (session?.user) {
-            resolved = true;
-            window.removeEventListener('storage', handleStorage);
-            clearInterval(pollInterval);
-            set({ user: session.user, session });
-            await get().fetchProfile();
-            resolve({});
-            return;
-          }
-
           if (popup.closed) {
             clearInterval(pollInterval);
-            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('message', handleMessage);
             if (!resolved) {
-              // One last try
-              const { data: { session: lastTry } } = await supabase.auth.refreshSession();
-              if (lastTry?.user) {
-                set({ user: lastTry.user, session: lastTry });
-                await get().fetchProfile();
-                resolve({});
-              } else {
-                resolve({ error: 'Sign in was cancelled' });
-              }
+              resolve({ error: 'Sign in was cancelled' });
             }
           }
         }, 1000);
