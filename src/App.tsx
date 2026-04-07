@@ -80,6 +80,7 @@ export default function App() {
 
       {view === 'dashboard' && (
         <Dashboard
+          onBack={() => setView('home')}
           onPlayAI={() => setView('game')}
           onOpenGame={(_gameId) => {
             // TODO: open specific multiplayer game

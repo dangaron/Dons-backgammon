@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useMultiplayerStore } from '../store/multiplayerStore';
 import type { Game } from '../lib/database.types';
@@ -11,12 +12,13 @@ import type { Game } from '../lib/database.types';
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 interface DashboardProps {
+  onBack: () => void;
   onPlayAI: () => void;
   onOpenGame: (gameId: string) => void;
   onSignIn: () => void;
 }
 
-export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
+export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
   const { user, profile } = useAuthStore();
   const { games, loadingGames, loadGames, createGame, joinGame } = useMultiplayerStore();
   const [showCreate, setShowCreate] = useState(false);
@@ -34,24 +36,11 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
     <>
       {/* Top bar */}
       <div className="top-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className="avatar active" style={{
-            background: 'var(--player-dim)',
-            animation: 'pulse-ring 2s ease-out infinite',
-          }}>
-            <span style={{ fontSize: 13 }}>
-              {profile?.username?.[0]?.toUpperCase() || '?'}
-            </span>
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>
-              {profile?.display_name || profile?.username || 'Guest'}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
-              {profile ? `${profile.games_won}W / ${profile.games_played}G` : 'Not signed in'}
-            </div>
-          </div>
-        </div>
+        <button className="action-btn secondary" onClick={onBack}
+          style={{ fontSize: 11, height: 28, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <ArrowLeft size={14} />
+          Back
+        </button>
         <div style={{
           fontSize: 14, fontWeight: 900, color: 'var(--text)',
           letterSpacing: 1.5, textTransform: 'uppercase',
