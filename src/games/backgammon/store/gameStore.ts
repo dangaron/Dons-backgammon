@@ -21,6 +21,7 @@ import { BAR, HOME, flipBoard } from '../engine/board';
 import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
 import type { AIDifficulty } from '../engine/ai';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
+import { playSound } from '../../../shared/lib/sounds';
 
 const STORAGE_KEY = 'backgammon-game-v2';
 const PRNG_STORAGE_KEY = 'backgammon-prng-v2';
@@ -271,6 +272,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const [d1, d2] = rng.rollTwoDice();
     const dice = rollDice(d1, d2);
     const newPrng = { seed: prng.seed, rollIndex: rng.rollIndex };
+    playSound('diceRoll');
 
     const newState: GameState = { ...gameState, dice, diceRolled: true, turnPhase: 'move' };
     save(newState, newPrng);
@@ -350,6 +352,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const dieIdx = gameState.dice.indexOf(die);
     const newDice = [...gameState.dice.slice(0, dieIdx), ...gameState.dice.slice(dieIdx + 1)];
 
+    // Sound for checker placement (hit or normal)
+    const wasHit = board[to] === -1;
+    playSound(wasHit ? 'checkerHit' : 'checkerPlace');
+
     // Check for win
     if (newBoard[HOME] >= 15) {
       const cubeValue = gameState.doublingCube.value;
@@ -364,6 +370,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         matchScore: newMatchScore,
       };
       save(winState, prng);
+      playSound(gameState.currentPlayer === 0 ? 'win' : 'loss');
       set({ gameState: winState, selectedPoint: null, legalDestinations: [], turnUndoStack: [], turnComplete: false });
       return;
     }
@@ -385,6 +392,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   undoMove: () => {
     const { turnUndoStack, gameState, prng } = get();
     if (turnUndoStack.length === 0) return;
+    playSound('undo');
 
     const prev = turnUndoStack[turnUndoStack.length - 1];
     const restoredState: GameState = { ...gameState, board: prev.board, dice: prev.dice };
@@ -400,6 +408,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   endTurn: () => {
     const { gameState, prng, gameMode } = get();
+    playSound('turnEnd');
     // Advance to next player
     const endState = forcedPass(gameState);
     save(endState, prng);

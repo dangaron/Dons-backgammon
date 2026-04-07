@@ -29,7 +29,7 @@ const GAME_ICONS: Record<GameType, React.ReactNode> = {
 const GAME_READY: Record<GameType, boolean> = {
   backgammon: true,
   solitaire: true,
-  yahtzee: false,
+  yahtzee: true,
   bridge: false,
 };
 

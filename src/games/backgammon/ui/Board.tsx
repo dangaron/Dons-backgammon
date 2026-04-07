@@ -255,6 +255,7 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
     startNewGame, makeSingleDieMove, aiHighlights, aiDice,
     turnUndoStack, turnComplete, undoMove, endTurn,
     openingRoll, openingWinner, performOpeningRoll,
+    hintMove, showingHint, requestHint, clearHint,
   } = useGameStore();
 
   const { board, dice, turnPhase, currentPlayer, winner, doublingCube, matchScore, matchLength } = gameState;
@@ -549,6 +550,15 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
           {turnPhase === 'roll' && currentPlayer === 0 && doublingCube.owner !== 1 && (
             <button className="action-btn secondary" onClick={offerDoubleAction}>
               x{doublingCube.value * 2}
+            </button>
+          )}
+
+          {/* Hint button — during move phase */}
+          {turnPhase === 'move' && currentPlayer === 0 && !turnComplete && (
+            <button className="action-btn secondary"
+              onClick={showingHint ? clearHint : requestHint}
+              style={{ fontSize: 12, padding: '0 12px' }}>
+              {showingHint ? '✕ Hide' : '💡 Hint'}
             </button>
           )}
 
@@ -852,6 +862,44 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
                 </g>
               </g>
             )}
+
+            {/* Hint overlay — ghost arrows showing AI's recommended move */}
+            {showingHint && hintMove && hintMove.length > 0 && (() => {
+              // Convert each die move to SVG coordinates for arrows
+              const arrows = hintMove.map((dm: { from: number; to: number; die: number }) => {
+                const fromPt = dm.from === BAR ? BW / 2 : (() => {
+                  const fi = dm.from;
+                  const col = fi < 12 ? (fi < 6 ? 5 - fi : fi - 6) : (fi < 18 ? 17 - fi : fi - 12);
+                  const isRight = fi < 6 || (fi >= 12 && fi < 18);
+                  return M + (isRight ? HALF_W + BAR_W : 0) + col * PT_W + PT_W / 2;
+                })();
+                const fromY = dm.from === BAR ? BH / 2 : (dm.from < 12 ? BH - M - 20 : M + 20);
+
+                const toPt = dm.to === HOME ? BW - 6 : (() => {
+                  const ti = dm.to;
+                  const col = ti < 12 ? (ti < 6 ? 5 - ti : ti - 6) : (ti < 18 ? 17 - ti : ti - 12);
+                  const isRight = ti < 6 || (ti >= 12 && ti < 18);
+                  return M + (isRight ? HALF_W + BAR_W : 0) + col * PT_W + PT_W / 2;
+                })();
+                const toY = dm.to === HOME ? BH / 2 : (dm.to < 12 ? BH - M - 40 : M + 40);
+
+                return { x1: fromPt, y1: fromY, x2: toPt, y2: toY };
+              });
+
+              return (
+                <g opacity={0.6}>
+                  {arrows.map((a: { x1: number; y1: number; x2: number; y2: number }, i: number) => (
+                    <g key={i}>
+                      <line x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                        stroke="#FFD700" strokeWidth={3} strokeLinecap="round"
+                        strokeDasharray="8 4" className="dest-glow" />
+                      <circle cx={a.x2} cy={a.y2} r={8}
+                        fill="#FFD700" opacity={0.5} className="dest-glow" />
+                    </g>
+                  ))}
+                </g>
+              );
+            })()}
 
             {/* Win overlay */}
             {turnPhase === 'game-over' && (

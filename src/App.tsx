@@ -9,6 +9,8 @@ import { SettingsScreen } from './shared/ui/SettingsScreen';
 import { GameSelector } from './shared/ui/GameSelector';
 import { SolitaireLobby } from './games/solitaire/ui/SolitaireLobby';
 import { SolitaireBoard } from './games/solitaire/ui/SolitaireBoard';
+import { YahtzeeLobby } from './games/yahtzee/ui/YahtzeeLobby';
+import { YahtzeeBoard } from './games/yahtzee/ui/YahtzeeBoard';
 import { useGameStore } from './games/backgammon/store/gameStore';
 import { useAuthStore } from './shared/store/authStore';
 import { isSupabaseConfigured } from './shared/lib/supabase';
@@ -26,7 +28,10 @@ type AppView =
   | 'backgammon-challenge-play'
   // Solitaire views
   | 'solitaire-lobby'
-  | 'solitaire-play';
+  | 'solitaire-play'
+  // Yahtzee views
+  | 'yahtzee-lobby'
+  | 'yahtzee-play';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
@@ -57,8 +62,11 @@ export default function App() {
       case 'solitaire':
         setView('solitaire-lobby');
         break;
+      case 'yahtzee':
+        setView('yahtzee-lobby');
+        break;
       default:
-        // Yahtzee and Bridge coming soon
+        // Bridge coming soon
         break;
     }
   };
@@ -171,6 +179,19 @@ export default function App() {
 
       {view === 'solitaire-play' && (
         <SolitaireBoard onQuit={() => setView('solitaire-lobby')} />
+      )}
+
+      {/* ── Yahtzee views ────────────────────────────────────────── */}
+
+      {view === 'yahtzee-lobby' && (
+        <YahtzeeLobby
+          onPlay={() => setView('yahtzee-play')}
+          onBack={() => setView('game-select')}
+        />
+      )}
+
+      {view === 'yahtzee-play' && (
+        <YahtzeeBoard onQuit={() => setView('yahtzee-lobby')} />
       )}
 
       {showConfirm && (
