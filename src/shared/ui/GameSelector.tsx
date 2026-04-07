@@ -30,7 +30,7 @@ const GAME_READY: Record<GameType, boolean> = {
   backgammon: true,
   solitaire: true,
   yahtzee: true,
-  bridge: false,
+  bridge: true,
 };
 
 export function GameSelector({ onSelectGame, onSettings, onSignIn }: GameSelectorProps) {

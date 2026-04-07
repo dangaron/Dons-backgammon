@@ -30,8 +30,14 @@ Multi-game platform. Currently includes Backgammon and Solitaire (Klondike), wit
 - Side-by-side scorecard with potential score preview
 - localStorage persistence
 
-### Coming Soon
-- **Bridge**: Bidding, trick-taking, AI partners, 4-player multiplayer
+### Bridge
+- Full contract bridge with bidding and trick-taking
+- Rule-based AI for all 3 computer players (bidding + card play)
+- N/S vs E/W partnerships — you play South, North is your partner
+- Bidding box with all levels, suits, pass, double, redouble
+- Dummy hand displayed face-up after bidding (declarer controls it)
+- Contract scoring with bonuses (game, slam, overtricks)
+- localStorage persistence
 
 ## Architecture
 
@@ -52,6 +58,10 @@ src/
       store/        ← Zustand store (game state, AI worker integration)
       ui/           ← SVG dice, scorecard, board, lobby
       workers/      ← AI Web Worker (Monte Carlo evaluation)
+    bridge/
+      engine/       ← Pure TS (bidding, tricks, scoring, AI)
+      store/        ← Zustand store (game state, AI turn orchestration)
+      ui/           ← Card hands, trick display, bidding box, lobby
   shared/
     engine/         ← GameType enum, shared interfaces
     store/          ← authStore, multiplayerStore (Supabase)
