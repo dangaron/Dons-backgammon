@@ -24,7 +24,7 @@ export interface GameState {
   currentPlayer: Player;
   dice: number[];          // remaining dice to play (e.g. [3, 5] or [4, 4, 4, 4] for doubles)
   diceRolled: boolean;
-  turnPhase: 'roll' | 'move' | 'double-offered' | 'game-over';
+  turnPhase: 'opening-roll' | 'roll' | 'move' | 'double-offered' | 'game-over';
   winner: Player | null;
   doublingCube: DoublingCube;
   /** Persistent borne-off counts by absolute player index. Survives board flips. */

@@ -17,7 +17,7 @@ import {
   canOfferDouble,
 } from '../engine/game';
 import { getLegalMoves, getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
-import { BAR, HOME } from '../engine/board';
+import { BAR, HOME, flipBoard } from '../engine/board';
 import { Mulberry32, generateSeed } from '../prng/mulberry32';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 
@@ -48,6 +48,10 @@ interface GameStore {
   aiHighlights: number[];
   /** AI's dice roll — persists through the entire animation so the player can study it */
   aiDice: number[];
+  /** Opening roll result: [playerDie, opponentDie] */
+  openingRoll: [number, number] | null;
+  /** Who won the opening roll */
+  openingWinner: 'you' | 'opponent' | 'tie' | null;
   /** Undo stack for player's die moves within a turn */
   turnUndoStack: Array<{ board: number[]; dice: number[] }>;
   /** Whether the player has finished moving (all dice used or no legal moves) */
@@ -55,6 +59,7 @@ interface GameStore {
 
   // Actions
   startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean) => void;
+  performOpeningRoll: () => void;
   rollDiceAction: () => void;
   selectPoint: (point: number) => void;
   makeMove: (move: Move) => void;
@@ -116,6 +121,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   matchLength: 1,
   aiHighlights: [],
   aiDice: [],
+  openingRoll: null,
+  openingWinner: null,
   turnUndoStack: [],
   turnComplete: false,
 
@@ -141,7 +148,80 @@ export const useGameStore = create<GameStore>((set, get) => ({
       turnComplete: false,
       aiHighlights: [],
       aiDice: [],
+      openingRoll: null,
+      openingWinner: null,
     });
+  },
+
+  performOpeningRoll: () => {
+    const { gameState, prng, gameMode } = get();
+    if (gameState.turnPhase !== 'opening-roll') return;
+
+    const rng = new Mulberry32(prng.seed, prng.rollIndex);
+    const playerDie = rng.rollDie();
+    const oppDie = rng.rollDie();
+    const newPrng = { seed: prng.seed, rollIndex: rng.rollIndex };
+
+    set({
+      prng: newPrng,
+      openingRoll: [playerDie, oppDie],
+      openingWinner: playerDie > oppDie ? 'you' : oppDie > playerDie ? 'opponent' : 'tie',
+    });
+
+    if (playerDie === oppDie) {
+      // Tie — re-roll after a delay
+      setTimeout(() => {
+        set({ openingRoll: null, openingWinner: null });
+        // Update the game state to trigger another opening roll
+        setTimeout(() => get().performOpeningRoll(), 300);
+      }, 1500);
+      return;
+    }
+
+    // Determine first player and set dice to both opening roll values
+    const openingDice = rollDice(playerDie, oppDie);
+
+    setTimeout(() => {
+      if (playerDie > oppDie) {
+        // Player goes first with the opening dice
+        const newState: GameState = {
+          ...gameState, dice: openingDice, diceRolled: true, turnPhase: 'move',
+          currentPlayer: 0,
+        };
+        save(newState, newPrng);
+        set({
+          gameState: newState,
+          openingRoll: null,
+          openingWinner: null,
+          rollHistory: [[playerDie, oppDie]],
+        });
+      } else {
+        // Opponent goes first — flip board for player 1's perspective
+        const flipped = flipBoard(gameState.board);
+        flipped[HOME] = 0; // opponent starts with 0 borne off
+        const newState: GameState = {
+          ...gameState,
+          board: flipped,
+          dice: openingDice,
+          diceRolled: true,
+          turnPhase: 'move',
+          currentPlayer: 1,
+          borneOff: [0, 0],
+        };
+        save(newState, newPrng);
+        set({
+          gameState: newState,
+          openingRoll: null,
+          openingWinner: null,
+          rollHistory: [[playerDie, oppDie]],
+        });
+
+        // Trigger AI move
+        if (gameMode === 'vs-ai') {
+          get().triggerAIMove();
+        }
+      }
+    }, 2000);
   },
 
   rollDiceAction: () => {

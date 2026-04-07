@@ -13,7 +13,7 @@ export default function App() {
   const [showConfirm, setShowConfirm] = useState(false);
   const { startNewGame, gameState } = useGameStore();
 
-  const hasActiveGame = gameState.turnPhase !== 'game-over' && gameState.diceRolled;
+  const hasActiveGame = gameState.turnPhase !== 'game-over';
 
   const handleNewGameClick = () => {
     if (hasActiveGame) {
@@ -50,14 +50,14 @@ export default function App() {
       {showConfirm && (
         <div className="overlay-backdrop" onClick={() => setShowConfirm(false)}>
           <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
-            <h2>Leave current game?</h2>
+            <h2>End current game?</h2>
             <p>Your game in progress will be lost.</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="action-btn secondary" style={{ flex: 1 }}
-                onClick={() => setShowConfirm(false)}>
-                Cancel
-              </button>
               <button className="action-btn primary" style={{ flex: 1 }}
+                onClick={() => setShowConfirm(false)}>
+                Return to Game
+              </button>
+              <button className="action-btn secondary" style={{ flex: 1 }}
                 onClick={handleConfirmNewGame}>
                 New Game
               </button>

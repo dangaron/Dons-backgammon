@@ -13,7 +13,7 @@ export function createInitialGameState(matchLength = 1): GameState {
     currentPlayer: 0,
     dice: [],
     diceRolled: false,
-    turnPhase: 'roll',
+    turnPhase: 'opening-roll',
     winner: null,
     doublingCube: { value: 1, owner: null, offeredBy: null },
     borneOff: [0, 0],

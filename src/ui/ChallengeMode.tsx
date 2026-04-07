@@ -41,7 +41,8 @@ function checkerCY(idx: number, n: number): number {
 
 // ── Theme colors (reads from document attribute set by main Board) ───────────
 function getThemeColors() {
-  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const theme = document.documentElement.getAttribute('data-theme');
+  const isDark = theme === 'dark';
   return isDark ? {
     boardBg: '#13151e', frameBg: '#0e1018', barBg: '#0c0e16',
     triA: '#1e2030', triB: '#282b3a',

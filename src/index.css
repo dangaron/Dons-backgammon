@@ -199,6 +199,10 @@ button { font-family: inherit; }
   touch-action: none;
 }
 
+[data-theme="light"] .board-svg {
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.18));
+}
+
 /* ── Checker Drag & Animation ──────────────────────────────────── */
 .checker-group {
   cursor: grab;

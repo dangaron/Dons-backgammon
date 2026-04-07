@@ -18,7 +18,7 @@ import { applySingleDieMove } from '../engine/moves';
 // ── Theme (stored in cookie) ─────────────────────────────────────────────────
 function getThemeCookie(): 'dark' | 'light' {
   const match = document.cookie.match(/(?:^|; )bg-theme=(dark|light)/);
-  return (match?.[1] as 'dark' | 'light') || 'dark';
+  return (match?.[1] as 'dark' | 'light') || 'light';
 }
 
 function setThemeCookie(theme: 'dark' | 'light') {
@@ -272,6 +272,7 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
     isAIThinking, prng, rollHistory, setShowVerifyDialog, showVerifyDialog,
     startNewGame, makeSingleDieMove, aiHighlights, aiDice,
     turnUndoStack, turnComplete, undoMove, endTurn,
+    openingRoll, openingWinner, performOpeningRoll,
   } = useGameStore();
 
   const { board, dice, turnPhase, currentPlayer, winner, doublingCube, matchScore, matchLength } = gameState;
@@ -521,8 +522,24 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
           display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center',
           padding: '8px 0 0', flexShrink: 0, minHeight: 46,
         }}>
-          {/* Roll button — always visible, disabled when not your roll */}
-          {(() => {
+          {/* Opening roll */}
+          {turnPhase === 'opening-roll' && !openingRoll && (
+            <button className="action-btn primary" onClick={performOpeningRoll}>
+              Roll for First Move
+            </button>
+          )}
+          {turnPhase === 'opening-roll' && openingRoll && (
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+              {openingWinner === 'tie'
+                ? 'Tie! Rolling again...'
+                : openingWinner === 'you'
+                  ? 'You go first!'
+                  : 'Opponent goes first'}
+            </span>
+          )}
+
+          {/* Roll button — always visible during normal play, disabled when not your roll */}
+          {turnPhase !== 'opening-roll' && (() => {
             const canRoll = turnPhase === 'roll' && currentPlayer === 0;
             return (
               <button
@@ -568,7 +585,39 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
 
       {/* ── Dice (above board) ── */}
       {(() => {
-        // Show AI dice during AI turn animation, otherwise show game dice
+        // Opening roll: show both dice side by side with labels
+        if (openingRoll) {
+          return (
+            <div style={{
+              display: 'flex', gap: 16, justifyContent: 'center', alignItems: 'center',
+              padding: '4px 0', flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--player)', textTransform: 'uppercase', letterSpacing: 0.5 }}>You</span>
+                <svg width={44} height={44} viewBox="0 0 44 44" className="die-group">
+                  <rect width={44} height={44} rx={10}
+                    fill={c.dieBg}
+                    stroke={openingRoll[0] > openingRoll[1] ? c.player : c.dieStroke}
+                    strokeWidth={openingRoll[0] > openingRoll[1] ? 2.5 : 1} />
+                  <DiePips value={openingRoll[0]} cx={22} cy={22} size={44} color={c.diePip} />
+                </svg>
+              </div>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 600 }}>vs</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--opponent)', textTransform: 'uppercase', letterSpacing: 0.5 }}>AI</span>
+                <svg width={44} height={44} viewBox="0 0 44 44" className="die-group">
+                  <rect width={44} height={44} rx={10}
+                    fill={c.dieBg}
+                    stroke={openingRoll[1] > openingRoll[0] ? c.opp : c.dieStroke}
+                    strokeWidth={openingRoll[1] > openingRoll[0] ? 2.5 : 1} />
+                  <DiePips value={openingRoll[1]} cx={22} cy={22} size={44} color={c.diePip} />
+                </svg>
+              </div>
+            </div>
+          );
+        }
+
+        // Normal dice display
         const showDice = aiDice.length > 0 ? aiDice : dice;
         const isAIDice = aiDice.length > 0;
         if (showDice.length === 0) return null;
@@ -613,6 +662,13 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
                 <stop offset="50%" stopColor="#0a0b1008" />
                 <stop offset="100%" stopColor="#15172200" />
               </linearGradient>
+              {/* Light mode: fade frame top edge into page background */}
+              <linearGradient id="frameGradLight" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={theme === 'light' ? '#e8e9ee' : c.frameBg} />
+                <stop offset="8%" stopColor={c.frameBg} />
+                <stop offset="92%" stopColor={c.frameBg} />
+                <stop offset="100%" stopColor={theme === 'light' ? '#e8e9ee' : c.frameBg} />
+              </linearGradient>
               <filter id="glow">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
@@ -623,7 +679,7 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
             </defs>
 
             {/* Frame */}
-            <rect width={BW} height={BH} fill={c.frameBg} rx={16} />
+            <rect width={BW} height={BH} fill="url(#frameGradLight)" rx={16} />
             {/* Board surface */}
             <rect x={M} y={M} width={BW - 2 * M} height={BH - 2 * M}
               fill={c.boardBg} rx={8} />
