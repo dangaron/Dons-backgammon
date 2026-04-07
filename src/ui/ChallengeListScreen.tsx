@@ -27,16 +27,6 @@ function GemIcon({ size = 16, color = '#FFD700' }: { size?: number; color?: stri
   );
 }
 
-function QuestIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 9l6-6 6 6" />
-      <path d="M12 3v12" />
-      <path d="M4 19h16" />
-      <path d="M4 22h16" />
-    </svg>
-  );
-}
 
 /* ── Animated counter hook ───────────────────────────────────── */
 
@@ -128,7 +118,6 @@ export function ChallengeListScreen({ onBack, onPlayChallenge }: ChallengeListSc
   useEffect(() => setProgress(loadDailyProgress()), []);
 
   const solvedCount = Object.values(progress.scores).filter(s => s.solved).length;
-  const scorePercent = Math.min(100, Math.round((progress.totalScore / maxScore) * 100));
   const winPercent = Math.min(100, Math.round((progress.totalScore / WIN_SCORE) * 100));
   const animatedScore = useAnimatedNumber(progress.totalScore);
 

@@ -19,7 +19,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
-  const { user, profile } = useAuthStore();
+  const { user } = useAuthStore();
   const { games, loadingGames, loadGames, createGame, joinGame } = useMultiplayerStore();
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
