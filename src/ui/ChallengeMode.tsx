@@ -10,6 +10,7 @@ import { chooseBestMove } from '../engine/ai';
 import { boardKey, BAR, OPP_BAR } from '../engine/board';
 import { getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
 import type { DieMove } from '../engine/types';
+import { recordChallengeResult } from '../lib/dailyChallenges';
 
 // ── Reuse main board dimensions & geometry ───────────────────────────────────
 const BW = 680;
@@ -81,10 +82,17 @@ function DiePips({ value, cx, cy, size, color }: { value: number; cx: number; cy
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
-export function ChallengeMode({ onBack }: { onBack: () => void }) {
-  const [currentIdx, setCurrentIdx] = useState(0);
+export function ChallengeMode({ onBack, challengeId, basePoints }: {
+  onBack: () => void;
+  challengeId?: string;
+  basePoints?: number;
+}) {
+  // If a specific challenge is requested, find it
+  const specificIdx = challengeId ? CHALLENGES.findIndex(c => c.id === challengeId) : -1;
+  const [currentIdx, setCurrentIdx] = useState(specificIdx >= 0 ? specificIdx : 0);
   const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
+  const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [dests, setDests] = useState<Array<{ to: number; die: number }>>([]);
   const [challengeBoard, setChallengeBoard] = useState<number[] | null>(null);
@@ -118,13 +126,18 @@ export function ChallengeMode({ onBack }: { onBack: () => void }) {
     if (!aiResult) return;
     const correct = boardKey(finalBoard) === boardKey(aiResult.resultBoard);
     setResult(correct ? 'correct' : 'incorrect');
+
+    // Record in daily challenge system
+    const pts = basePoints || (ch.difficulty === 'hard' ? 300 : ch.difficulty === 'medium' ? 200 : 100);
+    const progress = recordChallengeResult(ch.id, pts, correct);
     if (correct) {
+      setEarnedPoints(progress.scores[ch.id]?.points || 0);
       const newSolved = new Set(solvedIds);
       newSolved.add(ch.id);
       setSolvedIds(newSolved);
       try { localStorage.setItem('bg-solved-challenges', JSON.stringify([...newSolved])); } catch {}
     }
-  }, [solvedIds]);
+  }, [solvedIds, basePoints]);
 
   const handlePointClick = useCallback((i: number) => {
     if (!challenge || result !== null) return;
@@ -391,7 +404,7 @@ export function ChallengeMode({ onBack }: { onBack: () => void }) {
         {/* Result feedback */}
         {result === 'correct' && (
           <span style={{ color: c.player, fontWeight: 700, fontSize: 14 }}>
-            Correct!
+            Correct! {earnedPoints ? `+${earnedPoints} pts` : ''}
           </span>
         )}
         {result === 'incorrect' && (

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Board } from './ui/Board';
 import { ChallengeMode } from './ui/ChallengeMode';
+import { ChallengeListScreen } from './ui/ChallengeListScreen';
 import { Dashboard } from './ui/Dashboard';
 import { AuthModal } from './ui/AuthModal';
 import { HomeScreen } from './ui/HomeScreen';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
+import { getDailyChallenges } from './lib/dailyChallenges';
 
-type AppView = 'home' | 'dashboard' | 'game' | 'challenges';
+type AppView = 'home' | 'dashboard' | 'game' | 'challenge-list' | 'challenge-play';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
@@ -17,6 +19,8 @@ export default function App() {
   const [showNewGame, setShowNewGame] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [activeChallengeId, setActiveChallengeId] = useState<string | null>(null);
+  const [activeChallengePoints, setActiveChallengePoints] = useState<number>(0);
   const { startNewGame, gameState } = useGameStore();
   const { initialize, initialized, user } = useAuthStore();
 
@@ -62,7 +66,7 @@ export default function App() {
         <HomeScreen
           onPlayAI={() => setView('game')}
           onNewMultiplayer={() => setView('dashboard')}
-          onChallenges={() => setView('challenges')}
+          onChallenges={() => setView('challenge-list')}
           onSignIn={() => setShowAuth(true)}
           onDashboard={() => setView('dashboard')}
         />
@@ -81,7 +85,7 @@ export default function App() {
 
       {view === 'game' && (
         <Board
-          onChallenges={() => setView('challenges')}
+          onChallenges={() => setView('challenge-list')}
           onNewGame={handleNewGameClick}
           onDashboard={() => {
             if (user) setView('dashboard');
@@ -91,8 +95,24 @@ export default function App() {
         />
       )}
 
-      {view === 'challenges' && (
-        <ChallengeMode onBack={() => setView('game')} />
+      {view === 'challenge-list' && (
+        <ChallengeListScreen
+          onBack={() => setView('home')}
+          onPlayChallenge={(id) => {
+            const daily = getDailyChallenges().find(dc => dc.challenge.id === id);
+            setActiveChallengeId(id);
+            setActiveChallengePoints(daily?.points || 100);
+            setView('challenge-play');
+          }}
+        />
+      )}
+
+      {view === 'challenge-play' && activeChallengeId && (
+        <ChallengeMode
+          onBack={() => { setActiveChallengeId(null); setView('challenge-list'); }}
+          challengeId={activeChallengeId}
+          basePoints={activeChallengePoints}
+        />
       )}
 
       {showConfirm && (
