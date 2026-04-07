@@ -3,52 +3,85 @@ import { Board } from './ui/Board';
 import { ChallengeMode } from './ui/ChallengeMode';
 import { useGameStore } from './store/gameStore';
 
-type AppView = 'game' | 'challenges' | 'new-game-options';
+type AppView = 'game' | 'challenges';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 export default function App() {
   const [view, setView] = useState<AppView>('game');
-  const { startNewGame } = useGameStore();
+  const [showNewGame, setShowNewGame] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { startNewGame, gameState } = useGameStore();
 
-  const handleStartGame = (matchLength: number) => {
-    startNewGame('vs-ai', matchLength);
-    setView('game');
+  const hasActiveGame = gameState.turnPhase !== 'game-over' && gameState.diceRolled;
+
+  const handleNewGameClick = () => {
+    if (hasActiveGame) {
+      setShowConfirm(true);
+    } else {
+      setShowNewGame(true);
+    }
   };
 
-  if (view === 'challenges') {
-    return (
-      <div className="app">
-        <ChallengeMode onBack={() => setView('game')} />
-      </div>
-    );
-  }
+  const handleConfirmNewGame = () => {
+    setShowConfirm(false);
+    setShowNewGame(true);
+  };
+
+  const handleStartGame = (matchLength: number, cubeEnabled: boolean) => {
+    startNewGame('vs-ai', matchLength, cubeEnabled);
+    setShowNewGame(false);
+    setView('game');
+  };
 
   return (
     <div className="app">
       {view === 'game' && (
         <Board
           onChallenges={() => setView('challenges')}
-          onNewGame={() => setView('new-game-options')}
+          onNewGame={handleNewGameClick}
         />
       )}
 
-      {view === 'new-game-options' && (
+      {view === 'challenges' && (
+        <ChallengeMode onBack={() => setView('game')} />
+      )}
+
+      {showConfirm && (
+        <div className="overlay-backdrop" onClick={() => setShowConfirm(false)}>
+          <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+            <h2>Leave current game?</h2>
+            <p>Your game in progress will be lost.</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="action-btn secondary" style={{ flex: 1 }}
+                onClick={() => setShowConfirm(false)}>
+                Cancel
+              </button>
+              <button className="action-btn primary" style={{ flex: 1 }}
+                onClick={handleConfirmNewGame}>
+                New Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewGame && (
         <NewGameModal
           onStart={handleStartGame}
-          onCancel={() => setView('game')}
+          onCancel={() => setShowNewGame(false)}
         />
       )}
-
     </div>
   );
 }
 
 function NewGameModal({ onStart, onCancel }: {
-  onStart: (matchLength: number) => void;
+  onStart: (matchLength: number, cubeEnabled: boolean) => void;
   onCancel: () => void;
 }) {
   const [matchLength, setMatchLength] = useState(1);
+  const [cubeEnabled, setCubeEnabled] = useState(true);
 
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
@@ -68,8 +101,37 @@ function NewGameModal({ onStart, onCancel }: {
           ))}
         </div>
 
+        {/* Doubling Cube toggle */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 24, padding: '0 4px',
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Doubling Cube</div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+              Challenge your opponent to raise the stakes
+            </div>
+          </div>
+          <button
+            onClick={() => setCubeEnabled(!cubeEnabled)}
+            style={{
+              width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+              background: cubeEnabled ? 'var(--accent)' : 'var(--surface-2)',
+              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              position: 'absolute', top: 3,
+              left: cubeEnabled ? 24 : 3,
+              width: 20, height: 20, borderRadius: '50%',
+              background: 'white', transition: 'left 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }} />
+          </button>
+        </div>
+
         <button className="action-btn primary" style={{ width: '100%' }}
-          onClick={() => onStart(matchLength)}>
+          onClick={() => onStart(matchLength, cubeEnabled)}>
           Start Game
         </button>
       </div>

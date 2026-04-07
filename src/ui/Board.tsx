@@ -15,16 +15,22 @@ import { useGameStore } from '../store/gameStore';
 import { BAR, HOME, OPP_BAR, pipCount, opponentPipCount, unflopBoard } from '../engine/board';
 import { applySingleDieMove } from '../engine/moves';
 
-// ── Theme ────────────────────────────────────────────────────────────────────
+// ── Theme (stored in cookie) ─────────────────────────────────────────────────
+function getThemeCookie(): 'dark' | 'light' {
+  const match = document.cookie.match(/(?:^|; )bg-theme=(dark|light)/);
+  return (match?.[1] as 'dark' | 'light') || 'dark';
+}
+
+function setThemeCookie(theme: 'dark' | 'light') {
+  document.cookie = `bg-theme=${theme};path=/;max-age=${365 * 24 * 60 * 60};SameSite=Lax`;
+}
+
 function useTheme() {
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    try { return (localStorage.getItem('bg-theme') as 'dark' | 'light') || 'dark'; }
-    catch { return 'dark'; }
-  });
+  const [theme, setTheme] = useState<'dark' | 'light'>(getThemeCookie);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    try { localStorage.setItem('bg-theme', theme); } catch {}
+    setThemeCookie(theme);
   }, [theme]);
 
   const toggle = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
@@ -488,15 +494,24 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
           </div>
         </div>
 
-        <div className="player-info right">
-          <div className={`avatar${currentPlayer === 1 ? ' active opp' : ''}`}
-            style={{ background: c.oppDim }}>
-            <span style={{ fontSize: 18 }}>AI</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="player-info right">
+            <div className={`avatar${currentPlayer === 1 ? ' active opp' : ''}`}
+              style={{ background: c.oppDim }}>
+              <span style={{ fontSize: 18 }}>AI</span>
+            </div>
+            <div className="player-meta">
+              <div className="player-name">Opponent</div>
+              <div className="player-score">{matchScore[1]}</div>
+            </div>
           </div>
-          <div className="player-meta">
-            <div className="player-name">Opponent</div>
-            <div className="player-score">{matchScore[1]}</div>
-          </div>
+          {/* New Game button — top right */}
+          {onNewGame && (
+            <button className="action-btn secondary" onClick={onNewGame}
+              style={{ fontSize: 11, height: 28, padding: '0 10px', whiteSpace: 'nowrap' }}>
+              + New
+            </button>
+          )}
         </div>
       </div>
 
@@ -832,10 +847,6 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
           <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
             onClick={onChallenges}>Puzzles</button>
         )}
-        {onNewGame && (
-          <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
-            onClick={onNewGame}>+ New</button>
-        )}
 
         <span className="seed-label" onClick={() => setShowVerifyDialog(true)}>
           {prng.seed.toString(16).toUpperCase().padStart(8, '0')}
@@ -855,13 +866,6 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
           )}
         </button>
 
-        <button className="action-btn secondary icon-only" onClick={() => startNewGame()}
-          title="New game" style={{ width: 30, height: 30 }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M2 8a6 6 0 1 1 1.76 4.24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M2 12.5V8.5H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
       </div>
 
       {/* ── Verify Dialog ── */}

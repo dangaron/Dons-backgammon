@@ -54,7 +54,7 @@ interface GameStore {
   turnComplete: boolean;
 
   // Actions
-  startNewGame: (mode?: GameMode, matchLength?: number) => void;
+  startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean) => void;
   rollDiceAction: () => void;
   selectPoint: (point: number) => void;
   makeMove: (move: Move) => void;
@@ -119,9 +119,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnUndoStack: [],
   turnComplete: false,
 
-  startNewGame: (mode = 'vs-ai', matchLength = 1) => {
+  startNewGame: (mode = 'vs-ai', matchLength = 1, cubeEnabled = true) => {
     const seed = generateSeed();
     const newState = createInitialGameState(matchLength);
+    if (!cubeEnabled) {
+      // Disable doubling by setting owner to a dummy value that blocks both players
+      newState.doublingCube = { value: 1, owner: 0, offeredBy: null };
+    }
     const prng = { seed, rollIndex: 0 };
     save(newState, prng);
     set({
@@ -133,6 +137,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameMode: mode,
       rollHistory: [],
       matchLength,
+      turnUndoStack: [],
+      turnComplete: false,
+      aiHighlights: [],
+      aiDice: [],
     });
   },
 
