@@ -1,5 +1,6 @@
 /**
- * Home screen — welcoming, playful entry point.
+ * Home screen — welcoming entry point.
+ * Uses Lucide icons instead of emojis.
  */
 
 import { useState } from 'react';
@@ -7,6 +8,10 @@ import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useTheme } from '../lib/useTheme';
 import { isPushSupported, subscribeToPush, isPushSubscribed, unsubscribeFromPush } from '../lib/pushNotifications';
+import {
+  Cpu, Users, Globe, Puzzle, ClipboardList, Settings,
+  LogIn, Sun, Moon, Dice5, LogOut,
+} from 'lucide-react';
 
 interface HomeScreenProps {
   onPlayAI: () => void;
@@ -27,18 +32,18 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
       justifyContent: 'center', flex: 1, padding: 20,
       background: 'var(--bg)',
     }}>
-      {/* Animated dice header */}
+      {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <div style={{
-          fontSize: 64, lineHeight: 1, marginBottom: 12,
-          filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))',
+          marginBottom: 12,
+          color: 'var(--accent)',
+          filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
         }}>
-          <span className="die-group" style={{ display: 'inline-block' }}>🎲</span>
+          <Dice5 size={56} strokeWidth={1.5} />
         </div>
         <h1 style={{
-          fontSize: 26, fontWeight: 800, letterSpacing: 2,
+          fontSize: 24, fontWeight: 800, letterSpacing: 2,
           color: 'var(--text)', margin: '0 0 4px',
-          fontFamily: 'var(--font)',
         }}>
           Don's Backgammon
         </h1>
@@ -61,44 +66,50 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
         {user ? (
           <>
             <GameCard
-              emoji="🤖" title="Play vs Computer"
+              icon={<Cpu size={22} />}
+              title="Play vs Computer"
               subtitle="Practice against the AI"
               onClick={onPlayAI}
               color="var(--player)"
             />
             <GameCard
-              emoji="👥" title="Play vs Friend"
+              icon={<Users size={22} />}
+              title="Play vs Friend"
               subtitle="Invite a friend with a code"
               onClick={onNewMultiplayer}
               color="var(--accent)"
             />
             <GameCard
-              emoji="🌍" title="Play vs Random Opponent"
+              icon={<Globe size={22} />}
+              title="Play vs Random Opponent"
               subtitle="Get matched with someone online"
               onClick={onNewMultiplayer}
               color="#8b5cf6"
             />
             <GameCard
-              emoji="🧩" title="Solo Challenges"
+              icon={<Puzzle size={22} />}
+              title="Solo Challenges"
               subtitle="Find the best move in tricky positions"
               onClick={onChallenges}
               color="var(--hit)"
             />
             <div style={{ display: 'flex', gap: 10 }}>
-              <SmallCard emoji="📋" label="My Games" onClick={onDashboard} />
-              <SmallCard emoji="⚙️" label="Settings" onClick={() => setShowSettings(true)} />
+              <SmallCard icon={<ClipboardList size={16} />} label="My Games" onClick={onDashboard} />
+              <SmallCard icon={<Settings size={16} />} label="Settings" onClick={() => setShowSettings(true)} />
             </div>
           </>
         ) : (
           <>
             <GameCard
-              emoji="🤖" title="Play vs Computer"
+              icon={<Cpu size={22} />}
+              title="Play vs Computer"
               subtitle="Jump right in — no sign up needed"
               onClick={onPlayAI}
               color="var(--player)"
             />
             <GameCard
-              emoji="🧩" title="Challenges"
+              icon={<Puzzle size={22} />}
+              title="Challenges"
               subtitle="Test your backgammon skills"
               onClick={onChallenges}
               color="var(--hit)"
@@ -115,7 +126,8 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                👤 Sign in for online play
+                <LogIn size={16} />
+                Sign in for online play
               </button>
             )}
           </>
@@ -146,7 +158,7 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
           fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 6,
         }}
       >
-        {theme === 'light' ? '🌙' : '☀️'}
+        {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
         {theme === 'light' ? 'Dark mode' : 'Light mode'}
       </button>
 
@@ -155,8 +167,8 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
   );
 }
 
-function GameCard({ emoji, title, subtitle, onClick, color }: {
-  emoji: string; title: string; subtitle: string; onClick: () => void; color: string;
+function GameCard({ icon, title, subtitle, onClick, color }: {
+  icon: React.ReactNode; title: string; subtitle: string; onClick: () => void; color: string;
 }) {
   return (
     <button
@@ -168,7 +180,7 @@ function GameCard({ emoji, title, subtitle, onClick, color }: {
         borderRadius: 16, cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 14,
         textAlign: 'left', fontFamily: 'var(--font)',
-        transition: 'transform 0.15s, box-shadow 0.15s',
+        transition: 'transform 0.15s',
       }}
       onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
       onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -177,12 +189,13 @@ function GameCard({ emoji, title, subtitle, onClick, color }: {
       <div style={{
         width: 44, height: 44, borderRadius: 12,
         background: color + '18',
+        color: color,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22, flexShrink: 0,
+        flexShrink: 0,
       }}>
-        {emoji}
+        {icon}
       </div>
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
           {title}
         </div>
@@ -190,12 +203,14 @@ function GameCard({ emoji, title, subtitle, onClick, color }: {
           {subtitle}
         </div>
       </div>
-      <div style={{ marginLeft: 'auto', color: 'var(--text-dim)', fontSize: 18 }}>›</div>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: 'var(--text-dim)' }}>
+        <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
     </button>
   );
 }
 
-function SmallCard({ emoji, label, onClick }: { emoji: string; label: string; onClick: () => void }) {
+function SmallCard({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -213,7 +228,7 @@ function SmallCard({ emoji, label, onClick }: { emoji: string; label: string; on
       onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
     >
-      <span style={{ fontSize: 16 }}>{emoji}</span>
+      {icon}
       {label}
     </button>
   );
@@ -308,8 +323,9 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button className="action-btn secondary" onClick={async () => { await signOut(); onClose(); }}
-            style={{ width: '100%', color: 'var(--opponent)' }}>
-            Sign Out
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <LogOut size={14} />
+            <span style={{ color: 'var(--opponent)' }}>Sign Out</span>
           </button>
         </div>
       </div>
