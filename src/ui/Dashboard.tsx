@@ -1,5 +1,5 @@
 /**
- * Multi-game dashboard — Words With Friends style.
+ * Multi-game dashboard — game lobby style.
  * Shows active games, completed games, and invite/join controls.
  */
 
@@ -35,22 +35,30 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
       {/* Top bar */}
       <div className="top-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className="avatar active" style={{ background: 'var(--player-dim)' }}>
+          <div className="avatar active" style={{
+            background: 'var(--player-dim)',
+            animation: 'pulse-ring 2s ease-out infinite',
+          }}>
             <span style={{ fontSize: 13 }}>
               {profile?.username?.[0]?.toUpperCase() || '?'}
             </span>
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>
               {profile?.display_name || profile?.username || 'Guest'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
               {profile ? `${profile.games_won}W / ${profile.games_played}G` : 'Not signed in'}
             </div>
           </div>
         </div>
-        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', letterSpacing: 1 }}>
-          DON'S BACKGAMMON
+        <div style={{
+          fontSize: 14, fontWeight: 900, color: 'var(--text)',
+          letterSpacing: 1.5, textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ fontSize: 16 }}>🎲</span>
+          GAME LOBBY
         </div>
         <div style={{ width: 60 }} />
       </div>
@@ -61,24 +69,24 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
         display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 600, margin: '0 auto', width: '100%',
       }}>
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, animation: 'slide-up 0.4s ease-out' }}>
           <button className="action-btn primary" style={{ flex: 1 }} onClick={onPlayAI}>
-            Play vs AI
+            ⚔️ Play vs AI
           </button>
           {user ? (
             <>
               <button className="action-btn secondary" style={{ flex: 1 }}
                 onClick={() => setShowCreate(true)}>
-                Create Game
+                🎯 Create
               </button>
               <button className="action-btn secondary" style={{ flex: 1 }}
                 onClick={() => setShowJoin(true)}>
-                Join Game
+                🔗 Join
               </button>
             </>
           ) : (
             <button className="action-btn secondary" style={{ flex: 1 }} onClick={onSignIn}>
-              Sign In for Multiplayer
+              🔐 Sign In
             </button>
           )}
         </div>
@@ -86,25 +94,28 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
         {/* Invite result */}
         {inviteResult && (
           <div style={{
-            background: 'var(--player-dim)', borderRadius: 12, padding: '14px 16px',
+            background: 'linear-gradient(135deg, var(--player-dim), rgba(78, 205, 196, 0.05))',
+            border: '2px solid rgba(78, 205, 196, 0.2)',
+            borderRadius: 16, padding: '16px 18px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            animation: 'bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}>
             <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
-                Share this code with your opponent
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
+                📋 Share this code with your opponent
               </div>
               <div style={{
-                fontSize: 24, fontWeight: 800, letterSpacing: 4, color: 'var(--player)',
+                fontSize: 28, fontWeight: 900, letterSpacing: 6, color: 'var(--player)',
                 fontFamily: "'SF Mono', monospace",
               }}>
                 {inviteResult}
               </div>
             </div>
-            <button className="action-btn secondary" style={{ fontSize: 11, height: 30 }}
+            <button className="action-btn secondary" style={{ fontSize: 12, height: 34 }}
               onClick={() => {
                 navigator.clipboard?.writeText(inviteResult);
               }}>
-              Copy
+              📋 Copy
             </button>
           </div>
         )}
@@ -112,12 +123,17 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
         {/* Active games */}
         {activeGames.length > 0 && (
           <section>
-            <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Your Games
+            <h3 style={{
+              fontSize: 12, fontWeight: 800, color: 'var(--text-muted)',
+              textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10,
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>⚡</span> Your Games
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {activeGames.map(game => (
-                <GameCard key={game.id} game={game} myId={user!.id} onClick={() => onOpenGame(game.id)} />
+              {activeGames.map((game, i) => (
+                <GameCard key={game.id} game={game} myId={user!.id}
+                  onClick={() => onOpenGame(game.id)} index={i} />
               ))}
             </div>
           </section>
@@ -126,12 +142,17 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
         {/* Completed games */}
         {completedGames.length > 0 && (
           <section>
-            <h3 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Recent Games
+            <h3 style={{
+              fontSize: 12, fontWeight: 800, color: 'var(--text-muted)',
+              textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10,
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>📜</span> Recent Games
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {completedGames.map(game => (
-                <GameCard key={game.id} game={game} myId={user!.id} onClick={() => onOpenGame(game.id)} />
+              {completedGames.map((game, i) => (
+                <GameCard key={game.id} game={game} myId={user!.id}
+                  onClick={() => onOpenGame(game.id)} index={i} />
               ))}
             </div>
           </section>
@@ -139,15 +160,19 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
 
         {/* Empty state */}
         {!loadingGames && activeGames.length === 0 && completedGames.length === 0 && user && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🎲</div>
-            <div style={{ fontSize: 14 }}>No games yet</div>
-            <div style={{ fontSize: 12, marginTop: 4 }}>Create a game or join one with a code</div>
+          <div style={{
+            textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)',
+            animation: 'bounce-in 0.6s ease-out',
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12, animation: 'float 3s ease-in-out infinite' }}>🎲</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>No games yet!</div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>Create a game or join one with a code</div>
           </div>
         )}
 
         {loadingGames && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)', fontSize: 14, fontWeight: 600 }}>
+            <div style={{ marginBottom: 8, fontSize: 20, animation: 'float 1.5s ease-in-out infinite' }}>🎲</div>
             Loading games...
           </div>
         )}
@@ -181,7 +206,7 @@ export function Dashboard({ onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
   );
 }
 
-function GameCard({ game, myId, onClick }: { game: Game; myId: string; onClick: () => void }) {
+function GameCard({ game, myId, onClick, index }: { game: Game; myId: string; onClick: () => void; index: number }) {
   const isMyTurn = (game.current_player === 0 && game.player_white === myId) ||
                    (game.current_player === 1 && game.player_black === myId);
   const isWaiting = game.status === 'waiting';
@@ -192,44 +217,66 @@ function GameCard({ game, myId, onClick }: { game: Game; myId: string; onClick: 
     isCompleted ? (iWon ? 'var(--player)' : 'var(--opponent)') :
     isMyTurn ? 'var(--player)' : 'var(--text-muted)';
 
-  const statusText = isWaiting ? 'Waiting for opponent' :
-    isCompleted ? (iWon ? 'You won' : 'You lost') :
-    isMyTurn ? 'Your turn' : "Opponent's turn";
+  const statusText = isWaiting ? '⏳ Waiting for opponent' :
+    isCompleted ? (iWon ? '🏆 You won' : '💀 You lost') :
+    isMyTurn ? '🟢 Your turn' : "⏸️ Opponent's turn";
+
+  const borderColor = isMyTurn ? 'var(--player)' :
+    isCompleted && iWon ? 'var(--player)' :
+    isCompleted && !iWon ? 'var(--opponent)' :
+    'transparent';
 
   const timeAgo = getTimeAgo(game.updated_at);
 
   return (
     <button
+      className="game-card"
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'var(--surface-2)', border: '1px solid var(--glass-border)',
-        borderRadius: 12, padding: '12px 16px', cursor: 'pointer',
+        display: 'flex', alignItems: 'stretch',
+        background: 'var(--surface)', border: '1px solid var(--glass-border)',
+        borderRadius: 14, padding: 0, cursor: 'pointer',
         width: '100%', textAlign: 'left', fontFamily: 'var(--font)',
-        transition: 'background 0.2s',
+        overflow: 'hidden',
+        animation: `card-enter 0.3s ease-out ${index * 60}ms both`,
       }}
     >
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-          {game.match_length > 1 ? `${game.match_length}-point match` : 'Single game'}
-          <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8 }}>
-            {game.match_score[0]}-{game.match_score[1]}
-          </span>
-        </div>
-        <div style={{ fontSize: 11, color: statusColor, marginTop: 2, fontWeight: 600 }}>
-          {statusText}
-        </div>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{timeAgo}</div>
-        {isWaiting && game.invite_code && (
-          <div style={{
-            fontSize: 11, fontWeight: 700, color: 'var(--player)',
-            fontFamily: "'SF Mono', monospace", marginTop: 2,
-          }}>
-            {game.invite_code}
+      {/* Left accent */}
+      <div style={{
+        width: 4, flexShrink: 0,
+        background: borderColor,
+      }} />
+
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 16px 12px 12px', flex: 1,
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+            {game.match_length > 1 ? `${game.match_length}-point match` : 'Single game'}
+            <span style={{
+              fontSize: 11, color: 'var(--text-dim)', marginLeft: 8,
+              fontWeight: 800,
+            }}>
+              {game.match_score[0]}-{game.match_score[1]}
+            </span>
           </div>
-        )}
+          <div style={{ fontSize: 12, color: statusColor, marginTop: 3, fontWeight: 700 }}>
+            {statusText}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>{timeAgo}</div>
+          {isWaiting && game.invite_code && (
+            <div style={{
+              fontSize: 12, fontWeight: 800, color: 'var(--player)',
+              fontFamily: "'SF Mono', monospace", marginTop: 2,
+              letterSpacing: 2,
+            }}>
+              {game.invite_code}
+            </div>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -245,7 +292,8 @@ function CreateGameModal({ onClose, onCreate }: {
   return (
     <div className="overlay-backdrop" onClick={onClose}>
       <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
-        <h2>Create Online Game</h2>
+        <div style={{ fontSize: 28, marginBottom: 4 }}>🎯</div>
+        <h2>Create Game</h2>
         <p>Choose settings and share the invite code</p>
 
         <div className="match-selector">
@@ -260,10 +308,11 @@ function CreateGameModal({ onClose, onCreate }: {
 
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, padding: '0 4px',
+          marginBottom: 24, padding: '8px 12px',
+          background: 'var(--surface-2)', borderRadius: 12,
         }}>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Doubling Cube</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>🎲 Doubling Cube</div>
           </div>
           <button onClick={() => setCubeEnabled(!cubeEnabled)} style={{
             width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
@@ -280,7 +329,7 @@ function CreateGameModal({ onClose, onCreate }: {
 
         <button className="action-btn primary" style={{ width: '100%' }}
           onClick={() => onCreate(matchLength, cubeEnabled)}>
-          Create Game
+          🚀 Create Game
         </button>
       </div>
     </div>
@@ -308,8 +357,9 @@ function JoinGameModal({ onClose, onJoin }: {
   return (
     <div className="overlay-backdrop" onClick={onClose}>
       <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+        <div style={{ fontSize: 28, marginBottom: 4 }}>🔗</div>
         <h2>Join Game</h2>
-        <p>Enter the 6-character invite code from your opponent</p>
+        <p>Enter the invite code from your opponent</p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input
@@ -319,24 +369,25 @@ function JoinGameModal({ onClose, onJoin }: {
             onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
             className="auth-input"
             style={{
-              textAlign: 'center', fontSize: 20, fontWeight: 800,
+              textAlign: 'center', fontSize: 22, fontWeight: 900,
               letterSpacing: 6, fontFamily: "'SF Mono', monospace",
+              height: 52,
             }}
             autoFocus
           />
 
           {error && (
             <div style={{
-              fontSize: 12, padding: '8px 12px', borderRadius: 8,
+              fontSize: 12, padding: '10px 14px', borderRadius: 10, fontWeight: 600,
               background: 'var(--opponent-dim)', color: 'var(--opponent)',
             }}>
-              {error}
+              ⚠️ {error}
             </div>
           )}
 
           <button className="action-btn primary" type="submit"
             disabled={loading || code.length < 4} style={{ width: '100%' }}>
-            {loading ? 'Joining...' : 'Join Game'}
+            {loading ? '⏳ Joining...' : '🎮 Join Game'}
           </button>
         </form>
       </div>

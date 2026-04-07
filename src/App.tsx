@@ -5,12 +5,13 @@ import { ChallengeListScreen } from './ui/ChallengeListScreen';
 import { Dashboard } from './ui/Dashboard';
 import { AuthModal } from './ui/AuthModal';
 import { HomeScreen } from './ui/HomeScreen';
+import { SettingsScreen } from './ui/SettingsScreen';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
 import { getDailyChallenges } from './lib/dailyChallenges';
 
-type AppView = 'home' | 'dashboard' | 'game' | 'challenge-list' | 'challenge-play';
+type AppView = 'home' | 'dashboard' | 'game' | 'challenge-list' | 'challenge-play' | 'settings';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
@@ -69,7 +70,12 @@ export default function App() {
           onChallenges={() => setView('challenge-list')}
           onSignIn={() => setShowAuth(true)}
           onDashboard={() => setView('dashboard')}
+          onSettings={() => setView('settings')}
         />
+      )}
+
+      {view === 'settings' && (
+        <SettingsScreen onBack={() => setView('home')} />
       )}
 
       {view === 'dashboard' && (
@@ -118,16 +124,17 @@ export default function App() {
       {showConfirm && (
         <div className="overlay-backdrop" onClick={() => setShowConfirm(false)}>
           <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 28, marginBottom: 4 }}>⚠️</div>
             <h2>End current game?</h2>
             <p>Your game in progress will be lost.</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="action-btn primary" style={{ flex: 1 }}
                 onClick={() => setShowConfirm(false)}>
-                Return to Game
+                ▶️ Keep Playing
               </button>
               <button className="action-btn secondary" style={{ flex: 1 }}
                 onClick={handleConfirmNewGame}>
-                New Game
+                🔄 New Game
               </button>
             </div>
           </div>
@@ -161,6 +168,7 @@ function NewGameModal({ onStart, onCancel }: {
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
       <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+        <div style={{ fontSize: 28, marginBottom: 4 }}>⚔️</div>
         <h2>New Game</h2>
         <p>Points needed to win the match</p>
 
@@ -178,12 +186,13 @@ function NewGameModal({ onStart, onCancel }: {
 
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, padding: '0 4px',
+          marginBottom: 24, padding: '8px 12px',
+          background: 'var(--surface-2)', borderRadius: 12,
         }}>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Doubling Cube</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>🎲 Doubling Cube</div>
             <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-              Challenge your opponent to raise the stakes
+              Raise the stakes mid-game
             </div>
           </div>
           <button
@@ -206,7 +215,7 @@ function NewGameModal({ onStart, onCancel }: {
 
         <button className="action-btn primary" style={{ width: '100%' }}
           onClick={() => onStart(matchLength, cubeEnabled)}>
-          Start Game
+          🚀 Start Game
         </button>
       </div>
     </div>

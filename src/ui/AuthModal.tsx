@@ -1,5 +1,6 @@
 /**
  * Auth modal — sign in, sign up, or continue as guest.
+ * Game-style presentation.
  */
 
 import { useState } from 'react';
@@ -18,10 +19,11 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
     return (
       <div className="overlay-backdrop" onClick={onClose}>
         <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🔌</div>
           <h2>Multiplayer</h2>
           <p>Supabase is not configured yet. Add your credentials to .env to enable multiplayer.</p>
           <button className="action-btn primary" style={{ width: '100%' }} onClick={onGuest}>
-            Play Offline
+            🎮 Play Offline
           </button>
         </div>
       </div>
@@ -43,7 +45,6 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
       else {
         setError(null);
         setMode('signin');
-        // Show success message
         setError('Check your email to confirm your account');
       }
     }
@@ -59,8 +60,11 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
     <div className="overlay-backdrop" onClick={onClose}>
       <div className="overlay-card" onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: 380, textAlign: 'left' }}>
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>
+          <span style={{ fontSize: 28 }}>{mode === 'signin' ? '👋' : '🎮'}</span>
+        </div>
         <h2 style={{ textAlign: 'center' }}>
-          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+          {mode === 'signin' ? 'Welcome Back!' : 'Join the Game'}
         </h2>
         <p style={{ textAlign: 'center' }}>
           {mode === 'signin'
@@ -75,6 +79,7 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
           style={{
             width: '100%', marginBottom: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontWeight: 700,
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -88,7 +93,7 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
 
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 16px',
-          color: 'var(--text-dim)', fontSize: 12,
+          color: 'var(--text-dim)', fontSize: 12, fontWeight: 600,
         }}>
           <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           or
@@ -116,26 +121,26 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
 
           {error && (
             <div style={{
-              fontSize: 12, padding: '8px 12px', borderRadius: 8,
+              fontSize: 12, padding: '10px 14px', borderRadius: 10, fontWeight: 600,
               background: error.includes('Check your email') ? 'var(--player-dim)' : 'var(--opponent-dim)',
               color: error.includes('Check your email') ? 'var(--player)' : 'var(--opponent)',
             }}>
-              {error}
+              {error.includes('Check your email') ? '✅ ' : '⚠️ '}{error}
             </div>
           )}
 
           <button className="action-btn primary" type="submit"
             disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {loading ? '⏳ Loading...' : mode === 'signin' ? '🚀 Sign In' : '🎮 Create Account'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>
+        <div style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--text-muted)' }}>
           {mode === 'signin' ? (
             <>
               Don't have an account?{' '}
               <button onClick={() => { setMode('signup'); setError(null); }}
-                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12 }}>
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700 }}>
                 Sign up
               </button>
             </>
@@ -143,7 +148,7 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
             <>
               Already have an account?{' '}
               <button onClick={() => { setMode('signin'); setError(null); }}
-                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12 }}>
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700 }}>
                 Sign in
               </button>
             </>
@@ -152,8 +157,8 @@ export function AuthModal({ onClose, onGuest }: { onClose: () => void; onGuest: 
 
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <button className="action-btn secondary" onClick={onGuest}
-            style={{ width: '100%', fontSize: 12 }}>
-            Continue as Guest (offline only)
+            style={{ width: '100%', fontSize: 13 }}>
+            🎲 Continue as Guest
           </button>
         </div>
       </div>
