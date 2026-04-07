@@ -30,7 +30,7 @@ export function generateBracket(playerIds: string[]): Bracket {
   // Next power of 2
   const slots = Math.pow(2, Math.ceil(Math.log2(n)));
   const rounds = Math.log2(slots);
-  const byes = slots - n;
+  /* const byes = slots - n; // available for future seeding logic */
 
   // Seed players (higher seeds get byes)
   const seeded = [...playerIds];

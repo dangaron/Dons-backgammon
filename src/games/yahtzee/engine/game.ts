@@ -4,7 +4,7 @@
 
 import type { YahtzeeState, DieValue, Category, Player, PlayerState } from './types';
 import { ALL_CATEGORIES } from './types';
-import { scoreCategory, isYahtzeeBonus, totalScore, getAvailableCategories } from './scoring';
+import { scoreCategory, isYahtzeeBonus, totalScore } from './scoring';
 import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
 
 // ── State creation ─────────────────────────────────────────────────────────────

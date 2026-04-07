@@ -2,9 +2,8 @@
  * Yahtzee lobby — new game, continue, game mode selection.
  */
 
-import { useMemo } from 'react';
 import { useYahtzeeStore } from '../store/gameStore';
-import { SquareStack, ArrowLeft, Play, RotateCcw, Swords, Users } from 'lucide-react';
+import { SquareStack, ArrowLeft, Play, Swords, Users } from 'lucide-react';
 
 interface YahtzeeLobbyProps {
   onPlay: () => void;

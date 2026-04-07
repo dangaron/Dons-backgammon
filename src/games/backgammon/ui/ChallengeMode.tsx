@@ -128,7 +128,7 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
     setResult(correct ? 'correct' : 'incorrect');
 
     // Record in daily challenge system
-    const pts = basePoints || (ch.difficulty === 'hard' ? 300 : ch.difficulty === 'medium' ? 200 : 100);
+    const pts = basePoints || (ch.difficulty === 'expert' ? 500 : ch.difficulty === 'hard' ? 300 : ch.difficulty === 'medium' ? 200 : 100);
     const progress = recordChallengeResult(ch.id, pts, correct);
     if (correct) {
       setEarnedPoints(progress.scores[ch.id]?.points || 0);

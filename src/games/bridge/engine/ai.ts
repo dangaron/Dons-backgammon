@@ -3,9 +3,9 @@
  * Designed for casual play, not tournament-level.
  */
 
-import type { BridgeState, Seat, CardId, BidAction, Bid, BidSuit, BidLevel } from './types';
-import { BID_SUITS, SUITS, nextSeat, partnerOf, teamOf, sameTeam } from './types';
-import { suitOf, rankOf, hcpOf, suitIndex } from './deck';
+import type { BridgeState, CardId, BidAction, Bid, BidSuit, BidLevel, Trick } from './types';
+import { SUITS, nextSeat, partnerOf, sameTeam } from './types';
+import { suitOf, rankOf, hcpOf } from './deck';
 import { isLegalBid, getLegalCards } from './game';
 
 // ── Bidding AI ─────────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ function chooseResponse(eval_: HandEvaluation, partnerBid: Bid, state: BridgeSta
   return { type: 'pass' };
 }
 
-function chooseCompetitiveBid(eval_: HandEvaluation, lastBid: Bid, state: BridgeState): BidAction {
+function chooseCompetitiveBid(eval_: HandEvaluation, _lastBid: Bid, state: BridgeState): BidAction {
   // Try to bid own suit
   if (eval_.longestLength >= 5) {
     for (let level = 1 as BidLevel; level <= 3; level++) {
@@ -164,10 +164,10 @@ export function getAICard(state: BridgeState): CardId {
     return chooseLead(legalCards, state);
   }
 
-  const ledSuit = suitOf(trick.cards[0].card);
+  const ledSuit_ = suitOf(trick.cards[0].card);
 
   // Following suit
-  if (legalCards.every(c => suitOf(c) === ledSuit)) {
+  if (legalCards.every(c => suitOf(c) === ledSuit_)) {
     return chooseFollowSuit(legalCards, trick, state);
   }
 
@@ -244,7 +244,6 @@ function chooseFollowSuit(cards: CardId[], trick: Trick, state: BridgeState): Ca
 }
 
 function getHighestInTrick(trick: Trick, trump: BidSuit): CardId {
-  const ledSuit = suitOf(trick.cards[0].card);
   let highest = trick.cards[0].card;
 
   for (const { card } of trick.cards) {
@@ -262,7 +261,6 @@ function isPartnerWinning(trick: Trick, state: BridgeState): boolean {
   if (trick.cards.length === 0) return false;
 
   const trump = state.contract!.suit;
-  const ledSuit = suitOf(trick.cards[0].card);
   let winnerSeat = trick.cards[0].seat;
   let winnerCard = trick.cards[0].card;
 

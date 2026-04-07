@@ -2,9 +2,8 @@
  * Bridge game board — 4-player layout with bidding and trick play.
  */
 
-import { useMemo } from 'react';
 import { useBridgeStore } from '../store/gameStore';
-import type { Seat, CardId, BidAction, Bid } from '../engine/types';
+import type { BridgeState, Seat, CardId, BidAction, Bid } from '../engine/types';
 import { SEATS, BID_SUITS, nextSeat, teamOf } from '../engine/types';
 import { suitOf, rankOf, rankLabel, suitSymbol, suitColor, bidSuitSymbol, sortHand } from '../engine/deck';
 import { isLegalBid } from '../engine/game';
@@ -21,15 +20,8 @@ const SEAT_LABELS: Record<Seat, string> = {
   west: 'West',
 };
 
-const SEAT_POSITIONS: Record<Seat, { top?: string; bottom?: string; left?: string; right?: string }> = {
-  north: { top: '8px', left: '50%' },
-  south: { bottom: '8px', left: '50%' },
-  east: { right: '8px', top: '50%' },
-  west: { left: '8px', top: '50%' },
-};
-
 export function BridgeBoard({ onQuit }: BridgeBoardProps) {
-  const { gameState, legalCards, makeBid, playCardAction, startNewGame, lastTrick } = useBridgeStore();
+  const { gameState, legalCards, makeBid, playCardAction, startNewGame } = useBridgeStore();
   const { phase, humanSeat, contract, dummy, currentPlayer, currentTrick, tricksWon } = gameState;
 
   const isHumanTurn = phase === 'bidding'

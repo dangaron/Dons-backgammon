@@ -4,7 +4,6 @@
 
 import { create } from 'zustand';
 import type { BridgeState, Seat, CardId, BidAction } from '../engine/types';
-import { nextSeat } from '../engine/types';
 import {
   createInitialState,
   placeBid,

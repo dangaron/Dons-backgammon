@@ -4,8 +4,8 @@
 
 import type { Category, PlayerState } from '../engine/types';
 import {
-  UPPER_CATEGORIES, LOWER_CATEGORIES, ALL_CATEGORIES, CATEGORY_LABELS,
-  UPPER_BONUS_THRESHOLD, UPPER_BONUS_VALUE,
+  UPPER_CATEGORIES, LOWER_CATEGORIES, CATEGORY_LABELS,
+  UPPER_BONUS_VALUE,
 } from '../engine/types';
 import { upperSubtotal, upperBonus, totalScore } from '../engine/scoring';
 

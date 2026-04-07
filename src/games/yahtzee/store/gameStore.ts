@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import type { YahtzeeState, Category, DieValue } from '../engine/types';
+import type { YahtzeeState, Category } from '../engine/types';
 import {
   createInitialState,
   rollDice,
@@ -12,7 +12,7 @@ import {
   serializeState,
   deserializeState,
 } from '../engine/game';
-import { getPotentialScores, totalScore } from '../engine/scoring';
+import { getPotentialScores } from '../engine/scoring';
 import type { YahtzeeAIRequest, YahtzeeAIResponse } from '../workers/ai.worker';
 
 const STORAGE_KEY = 'yahtzee-game-v1';

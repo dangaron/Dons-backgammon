@@ -100,6 +100,11 @@ const DIFF_CONFIG = {
     gradient: 'linear-gradient(135deg, #FF5252 0%, #D32F2F 100%)',
     label: 'HARD',
   },
+  expert: {
+    color: '#9C27B0',
+    gradient: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)',
+    label: 'EXPERT',
+  },
 } as const;
 
 /* ── Main screen ─────────────────────────────────────────────── */
@@ -296,7 +301,7 @@ function ChallengeCard({
   earnedPoints, solved, attempted, attempts, animIndex, onClick,
 }: {
   index: number; title: string; description: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   basePoints: number; earnedPoints: number;
   solved: boolean; attempted: boolean; attempts: number;
   animIndex: number;

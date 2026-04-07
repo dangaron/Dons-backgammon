@@ -6,7 +6,7 @@ import type {
   BridgeState, Seat, CardId, BidAction, Bid, Contract, Trick, BidSuit,
 } from './types';
 import { SEATS, BID_SUITS, nextSeat, partnerOf, teamOf, sameTeam } from './types';
-import { createDeck, shuffle, sortHand, suitOf, rankOf, suitIndex } from './deck';
+import { createDeck, shuffle, sortHand, suitOf, rankOf } from './deck';
 import { generateSeed } from '../../../prng/mulberry32';
 
 // ── State creation ─────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export function isLegalBid(state: BridgeState, action: BidAction): boolean {
   const lastBid = findLastBid(history);
   if (!lastBid) return true; // First bid
 
-  return compareBids(action, lastBid) > 0;
+  return compareBids(action as Bid, lastBid) > 0;
 }
 
 /** Compare two bids. Returns positive if a > b. */
@@ -287,7 +287,6 @@ export function playCard(state: BridgeState, card: CardId): BridgeState {
 
 /** Determine who wins a trick. */
 function determineTrickWinner(cards: { seat: Seat; card: CardId }[], trump: BidSuit): Seat {
-  const ledSuit = suitOf(cards[0].card);
   let winner = cards[0];
 
   for (let i = 1; i < cards.length; i++) {

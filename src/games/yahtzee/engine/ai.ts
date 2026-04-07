@@ -4,8 +4,8 @@
  */
 
 import type { DieValue, Category, PlayerState, YahtzeeState } from './types';
-import { scoreCategory, getAvailableCategories, isYahtzeeBonus, totalScore, upperSubtotal } from './scoring';
-import { UPPER_CATEGORIES, UPPER_BONUS_THRESHOLD, UPPER_BONUS_VALUE, YAHTZEE_BONUS_VALUE } from './types';
+import { scoreCategory, getAvailableCategories, upperSubtotal } from './scoring';
+import { UPPER_CATEGORIES, UPPER_BONUS_THRESHOLD } from './types';
 
 const SIMULATIONS_PER_HOLD = 100;
 
