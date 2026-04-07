@@ -25,8 +25,6 @@ function saveSettings(s: SoundSettings) {
 }
 
 let settings = loadSettings();
-let initialized = false;
-const audioCache: Partial<Record<SoundName, HTMLAudioElement>> = {};
 
 // Synthesized sounds via Web Audio API (no mp3 files needed)
 let audioCtx: AudioContext | null = null;

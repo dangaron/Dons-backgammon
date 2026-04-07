@@ -24,7 +24,7 @@ export interface AIResponse {
 
 self.onmessage = (e: MessageEvent<AIRequest>) => {
   try {
-    const { board, dice, difficulty = 'medium', type = 'move' } = e.data;
+    const { board, dice, difficulty = 'medium' } = e.data;
     const maxMs = difficulty === 'expert' ? 200 : 50;
     const result = chooseBestMove(board, dice, maxMs, difficulty);
     const response: AIResponse = {

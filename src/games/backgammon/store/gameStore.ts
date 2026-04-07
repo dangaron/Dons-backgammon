@@ -22,6 +22,8 @@ import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
 import type { AIDifficulty } from '../engine/ai';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 import { playSound } from '../../../shared/lib/sounds';
+import type { MoveRecord } from '../engine/analysis';
+import { saveGameHistory } from '../../../shared/lib/gameHistory';
 
 const STORAGE_KEY = 'backgammon-game-v2';
 const PRNG_STORAGE_KEY = 'backgammon-prng-v2';
@@ -58,6 +60,14 @@ interface GameStore {
   turnUndoStack: Array<{ board: number[]; dice: number[] }>;
   /** Whether the player has finished moving (all dice used or no legal moves) */
   turnComplete: boolean;
+  /** Move history for post-game analysis */
+  moveHistory: MoveRecord[];
+  /** Current turn's accumulated die moves (before endTurn) */
+  currentTurnMoves: import('../engine/types').DieMove[];
+  /** Board at start of current turn */
+  turnStartBoard: number[] | null;
+  /** Dice at start of current turn */
+  turnStartDice: number[] | null;
   /** AI difficulty level */
   aiDifficulty: AIDifficulty;
   /** Hint: AI's recommended move */
@@ -136,6 +146,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openingWinner: null,
   turnUndoStack: [],
   turnComplete: false,
+  moveHistory: [],
+  currentTurnMoves: [],
+  turnStartBoard: null,
+  turnStartDice: null,
   aiDifficulty: 'medium',
   hintMove: null,
   hintScore: null,
@@ -190,6 +204,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       aiDice: [],
       openingRoll: null,
       openingWinner: null,
+      moveHistory: [],
+      currentTurnMoves: [],
+      turnStartBoard: null,
+      turnStartDice: null,
     });
   },
 
@@ -282,6 +300,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       prng: newPrng,
       rollHistory: [...s.rollHistory, [d1, d2]],
       aiDice: isAI ? dice : [],
+      turnStartBoard: gameState.board.slice(),
+      turnStartDice: dice.slice(),
+      currentTurnMoves: [],
     }));
 
     if (!hasLegalMoves(newState.board, dice)) {
@@ -353,7 +374,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const newDice = [...gameState.dice.slice(0, dieIdx), ...gameState.dice.slice(dieIdx + 1)];
 
     // Sound for checker placement (hit or normal)
-    const wasHit = board[to] === -1;
+    const wasHit = gameState.board[to] === -1;
     playSound(wasHit ? 'checkerHit' : 'checkerPlace');
 
     // Check for win
@@ -371,6 +392,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
       save(winState, prng);
       playSound(gameState.currentPlayer === 0 ? 'win' : 'loss');
+
+      // Save game history for analysis
+      const finalHistory = [...get().moveHistory];
+      if (get().turnStartBoard && get().turnStartDice) {
+        finalHistory.push({
+          turnNumber: finalHistory.length,
+          player: gameState.currentPlayer,
+          dice: get().turnStartDice!,
+          move: [...get().currentTurnMoves, dieMove],
+          boardBefore: get().turnStartBoard!,
+          boardAfter: newBoard.slice(),
+        });
+      }
+      if (finalHistory.length > 0) {
+        saveGameHistory({
+          id: `bg-${Date.now()}`,
+          gameType: 'backgammon',
+          date: new Date().toISOString(),
+          moves: finalHistory,
+          result: gameState.currentPlayer === 0 ? 'win' : 'loss',
+        });
+      }
+
       set({ gameState: winState, selectedPoint: null, legalDestinations: [], turnUndoStack: [], turnComplete: false });
       return;
     }
@@ -386,6 +430,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       legalDestinations: [],
       turnUndoStack: [...get().turnUndoStack, undoEntry],
       turnComplete: complete,
+      currentTurnMoves: [...get().currentTurnMoves, dieMove],
     });
   },
 
@@ -407,8 +452,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   endTurn: () => {
-    const { gameState, prng, gameMode } = get();
+    const { gameState, prng, gameMode, turnStartBoard, turnStartDice, currentTurnMoves, moveHistory } = get();
     playSound('turnEnd');
+
+    // Record this turn in move history
+    if (turnStartBoard && turnStartDice && currentTurnMoves.length > 0) {
+      const record: MoveRecord = {
+        turnNumber: moveHistory.length,
+        player: gameState.currentPlayer,
+        dice: turnStartDice,
+        move: currentTurnMoves,
+        boardBefore: turnStartBoard,
+        boardAfter: gameState.board.slice(),
+      };
+      set({ moveHistory: [...moveHistory, record] });
+    }
+
     // Advance to next player
     const endState = forcedPass(gameState);
     save(endState, prng);
@@ -418,6 +477,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       legalDestinations: [],
       turnUndoStack: [],
       turnComplete: false,
+      currentTurnMoves: [],
     });
 
     if (endState.turnPhase === 'game-over') return;
@@ -442,7 +502,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   animateAIMove: (move: Move) => {
     const originalState = get().gameState;
-    const { prng } = get();
+    const { prng, moveHistory } = get();
     let board = originalState.board.slice();
     let step = 0;
     const highlights: number[] = [];
@@ -452,7 +512,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // All steps animated. Apply the full move properly to advance turn.
         const finalState = applyMoveToState(originalState, move);
         save(finalState, prng);
-        set({ gameState: finalState, isAIThinking: false });
+
+        // Record AI turn in move history
+        const aiRecord: MoveRecord = {
+          turnNumber: moveHistory.length,
+          player: originalState.currentPlayer,
+          dice: originalState.dice.slice(),
+          move,
+          boardBefore: originalState.board.slice(),
+          boardAfter: finalState.board.slice(),
+        };
+        set({ gameState: finalState, isAIThinking: false, moveHistory: [...moveHistory, aiRecord] });
 
         // Keep highlights + dice visible so the player can study what the AI did
         setTimeout(() => {
