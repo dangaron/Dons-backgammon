@@ -8,7 +8,7 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import { useTheme } from '../lib/useTheme';
 import {
   Users, Globe, Puzzle, ClipboardList, Settings,
-  LogIn, Sun, Moon, LogOut, Swords, Flame,
+  LogIn, Sun, Moon, LogOut, Swords, Flame, ArrowLeft,
 } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -18,9 +18,10 @@ interface HomeScreenProps {
   onDashboard: () => void;
   onSignIn: () => void;
   onSettings?: () => void;
+  onBack?: () => void;
 }
 
-export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboard, onSignIn, onSettings }: HomeScreenProps) {
+export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboard, onSignIn, onSettings, onBack }: HomeScreenProps) {
   const { user, profile, signOut } = useAuthStore();
   const { theme, toggle: toggleTheme } = useTheme();
 
@@ -28,8 +29,26 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', flex: 1, padding: 20,
-      background: 'var(--bg)',
+      background: 'var(--bg)', position: 'relative',
     }}>
+      {/* Back to game selector */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            position: 'absolute', top: 16, left: 16,
+            background: 'var(--surface)', border: '1px solid var(--glass-border)',
+            borderRadius: 10, padding: '6px 12px',
+            color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
+            fontFamily: 'var(--font)', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 5,
+            transition: 'all 0.2s',
+          }}
+        >
+          <ArrowLeft size={14} />
+          All Games
+        </button>
+      )}
       {/* Logo area — game title screen feel */}
       <div style={{
         textAlign: 'center', marginBottom: 28,

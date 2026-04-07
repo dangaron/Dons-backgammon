@@ -28,6 +28,17 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --btn-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
   --btn-shadow-sm: 0 2px 0 rgba(0, 0, 0, 0.3);
+  /* Solitaire card colors */
+  --card-face: #ffffff;
+  --card-back: #2563eb;
+  --card-back-border: #1d4ed8;
+  --card-back-pattern: rgba(255, 255, 255, 0.15);
+  --card-border: #cbd5e1;
+  --card-red: #dc2626;
+  --card-black: #1e293b;
+  --card-empty: rgba(255, 255, 255, 0.15);
+  --card-highlight: #22c55e;
+  --board-bg: #0f5132;
 }
 
 /* ── Light Mode ────────────────────────────────────────────────── */
@@ -52,6 +63,16 @@
   --glass-border: rgba(0, 0, 0, 0.08);
   --btn-shadow: 0 4px 0 rgba(0, 0, 0, 0.12);
   --btn-shadow-sm: 0 2px 0 rgba(0, 0, 0, 0.1);
+  /* Solitaire card colors — light mode */
+  --card-face: #ffffff;
+  --card-back: #3b82f6;
+  --card-back-border: #2563eb;
+  --card-border: #d1d5db;
+  --card-red: #dc2626;
+  --card-black: #1e293b;
+  --card-empty: rgba(0, 0, 0, 0.1);
+  --card-highlight: #16a34a;
+  --board-bg: #16a34a;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

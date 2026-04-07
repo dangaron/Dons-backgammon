@@ -6,17 +6,32 @@ import { Dashboard } from './shared/ui/Dashboard';
 import { AuthModal } from './shared/ui/AuthModal';
 import { HomeScreen } from './shared/ui/HomeScreen';
 import { SettingsScreen } from './shared/ui/SettingsScreen';
+import { GameSelector } from './shared/ui/GameSelector';
+import { SolitaireLobby } from './games/solitaire/ui/SolitaireLobby';
+import { SolitaireBoard } from './games/solitaire/ui/SolitaireBoard';
 import { useGameStore } from './games/backgammon/store/gameStore';
 import { useAuthStore } from './shared/store/authStore';
 import { isSupabaseConfigured } from './shared/lib/supabase';
 import { getDailyChallenges } from './shared/lib/dailyChallenges';
+import type { GameType } from './shared/engine/types';
 
-type AppView = 'home' | 'dashboard' | 'game' | 'challenge-list' | 'challenge-play' | 'settings';
+type AppView =
+  | 'game-select'
+  | 'settings'
+  // Backgammon views
+  | 'backgammon-lobby'
+  | 'backgammon-play'
+  | 'backgammon-dashboard'
+  | 'backgammon-challenge-list'
+  | 'backgammon-challenge-play'
+  // Solitaire views
+  | 'solitaire-lobby'
+  | 'solitaire-play';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 export default function App() {
-  const [view, setView] = useState<AppView>('home');
+  const [view, setView] = useState<AppView>('game-select');
   const [showNewGame, setShowNewGame] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -34,8 +49,22 @@ export default function App() {
 
   const hasActiveGame = gameState.turnPhase !== 'game-over';
 
+  const handleSelectGame = (game: GameType) => {
+    switch (game) {
+      case 'backgammon':
+        setView('backgammon-lobby');
+        break;
+      case 'solitaire':
+        setView('solitaire-lobby');
+        break;
+      default:
+        // Yahtzee and Bridge coming soon
+        break;
+    }
+  };
+
   const handleNewGameClick = () => {
-    if (hasActiveGame && view === 'game') {
+    if (hasActiveGame && view === 'backgammon-play') {
       setShowConfirm(true);
     } else {
       setShowNewGame(true);
@@ -50,7 +79,7 @@ export default function App() {
   const handleStartGame = (matchLength: number, cubeEnabled: boolean) => {
     startNewGame('vs-ai', matchLength, cubeEnabled);
     setShowNewGame(false);
-    setView('game');
+    setView('backgammon-play');
   };
 
   if (!initialized && isSupabaseConfigured()) {
@@ -63,63 +92,84 @@ export default function App() {
 
   return (
     <div className="app">
-      {view === 'home' && (
-        <HomeScreen
-          onPlayAI={() => setView('game')}
-          onNewMultiplayer={() => setView('dashboard')}
-          onChallenges={() => setView('challenge-list')}
-          onSignIn={() => setShowAuth(true)}
-          onDashboard={() => setView('dashboard')}
+      {view === 'game-select' && (
+        <GameSelector
+          onSelectGame={handleSelectGame}
           onSettings={() => setView('settings')}
+          onSignIn={() => setShowAuth(true)}
+        />
+      )}
+
+      {view === 'backgammon-lobby' && (
+        <HomeScreen
+          onPlayAI={() => setView('backgammon-play')}
+          onNewMultiplayer={() => setView('backgammon-dashboard')}
+          onChallenges={() => setView('backgammon-challenge-list')}
+          onSignIn={() => setShowAuth(true)}
+          onDashboard={() => setView('backgammon-dashboard')}
+          onSettings={() => setView('settings')}
+          onBack={() => setView('game-select')}
         />
       )}
 
       {view === 'settings' && (
-        <SettingsScreen onBack={() => setView('home')} />
+        <SettingsScreen onBack={() => setView('game-select')} />
       )}
 
-      {view === 'dashboard' && (
+      {view === 'backgammon-dashboard' && (
         <Dashboard
-          onBack={() => setView('home')}
-          onPlayAI={() => setView('game')}
-          onOpenGame={(_gameId) => {
-            // TODO: open specific multiplayer game
-            setView('game');
+          onBack={() => setView('backgammon-lobby')}
+          onPlayAI={() => setView('backgammon-play')}
+          onOpenGame={() => {
+            setView('backgammon-play');
           }}
           onSignIn={() => setShowAuth(true)}
         />
       )}
 
-      {view === 'game' && (
+      {view === 'backgammon-play' && (
         <Board
-          onChallenges={() => setView('challenge-list')}
+          onChallenges={() => setView('backgammon-challenge-list')}
           onNewGame={handleNewGameClick}
           onDashboard={() => {
-            if (user) setView('dashboard');
-            else setView('home');
+            if (user) setView('backgammon-dashboard');
+            else setView('backgammon-lobby');
           }}
-          onQuit={() => setView('home')}
+          onQuit={() => setView('backgammon-lobby')}
         />
       )}
 
-      {view === 'challenge-list' && (
+      {view === 'backgammon-challenge-list' && (
         <ChallengeListScreen
-          onBack={() => setView('home')}
+          onBack={() => setView('backgammon-lobby')}
           onPlayChallenge={(id) => {
             const daily = getDailyChallenges().find(dc => dc.challenge.id === id);
             setActiveChallengeId(id);
             setActiveChallengePoints(daily?.points || 100);
-            setView('challenge-play');
+            setView('backgammon-challenge-play');
           }}
         />
       )}
 
-      {view === 'challenge-play' && activeChallengeId && (
+      {view === 'backgammon-challenge-play' && activeChallengeId && (
         <ChallengeMode
-          onBack={() => { setActiveChallengeId(null); setView('challenge-list'); }}
+          onBack={() => { setActiveChallengeId(null); setView('backgammon-challenge-list'); }}
           challengeId={activeChallengeId}
           basePoints={activeChallengePoints}
         />
+      )}
+
+      {/* ── Solitaire views ──────────────────────────────────────── */}
+
+      {view === 'solitaire-lobby' && (
+        <SolitaireLobby
+          onPlay={() => setView('solitaire-play')}
+          onBack={() => setView('game-select')}
+        />
+      )}
+
+      {view === 'solitaire-play' && (
+        <SolitaireBoard onQuit={() => setView('solitaire-lobby')} />
       )}
 
       {showConfirm && (
@@ -152,7 +202,7 @@ export default function App() {
       {showAuth && (
         <AuthModal
           onClose={() => setShowAuth(false)}
-          onGuest={() => { setShowAuth(false); setView('game'); }}
+          onGuest={() => { setShowAuth(false); setView('backgammon-play'); }}
         />
       )}
     </div>

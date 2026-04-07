@@ -1,74 +1,85 @@
-# Backgammon — Project Overview
+# Don's Game Room — Project Overview
 
-World's best backgammon for serious players. Gameplay-first: speed control, click-to-see-all-moves, challenge mode, transparent dice.
+Multi-game platform. Currently includes Backgammon and Solitaire (Klondike), with Yahtzee and Bridge planned.
 
 ## What it does
 
+### Backgammon
 - Full backgammon vs AI (heuristic, runs in Web Worker)
 - Click a piece to see all legal destinations highlighted (green = open, amber = hit)
 - Adjustable animation speed (0.5x – 3x)
 - Doubling cube with Offer/Accept modal
-- Transparent dice: Mulberry32 seeded PRNG, seed displayed in UI, full roll history verifiable
-- Challenge mode: curated positions, "find the best move" — free and unlimited
-- localStorage persistence: game survives crash/refresh
-- Play + challenges tabs in one app
+- Transparent dice: Mulberry32 seeded PRNG, seed displayed in UI
+- Challenge mode: curated positions, "find the best move"
+- Online multiplayer via Supabase (invite codes, real-time sync)
+
+### Solitaire (Klondike)
+- Classic Klondike solitaire with Draw-1 and Draw-3 modes
+- SVG card rendering with click-to-select, click-to-move interaction
+- Hint system (priority-based heuristic solver)
+- Auto-move: safe cards auto-play to foundations
+- Unlimited undo, scoring with time bonus
+- Stats tracking (games played/won, best time, win streaks)
+
+### Coming Soon
+- **Yahtzee**: 5-dice, 13 categories, AI opponent, online multiplayer
+- **Bridge**: Bidding, trick-taking, AI partners, 4-player multiplayer
 
 ## Architecture
 
 ```
 src/
-  engine/         ← Pure TS, no UI imports. Runs in browser AND Deno (Phase 2 edge functions).
-    types.ts      ← Board, GameState, Move, DieMove, DoublingCube interfaces
-    board.ts      ← Board utilities (flipBoard, pipCount, allCheckersHome, etc.)
-    moves.ts      ← Legal move enumeration (getLegalMoves, getLegalMovesFrom, applyMove)
-    game.ts       ← Game state transitions (roll, move, double, win detection)
-    ai.ts         ← Heuristic AI evaluator (pip count + blot safety + anchors + priming)
-    challenges.ts ← 15 curated challenge positions
+  games/
+    backgammon/
+      engine/       ← Pure TS game logic (board, moves, AI, challenges)
+      store/        ← Zustand store (game + UI state)
+      ui/           ← SVG board, challenge mode
+      workers/      ← AI Web Worker
+    solitaire/
+      engine/       ← Pure TS (deck, moves, game state, solver/hints)
+      store/        ← Zustand store (game state, undo, stats)
+      ui/           ← SVG cards, board layout, lobby
+  shared/
+    engine/         ← GameType enum, shared interfaces
+    store/          ← authStore, multiplayerStore (Supabase)
+    ui/             ← GameSelector, Dashboard, AuthModal, Settings
+    lib/            ← Supabase client, gameService, dailyChallenges, theme
   prng/
-    mulberry32.ts ← Seeded PRNG, rollIndex tracking for crash recovery
-  workers/
-    ai.worker.ts  ← Web Worker wrapper for AI (postMessage interface)
-  store/
-    gameStore.ts  ← Zustand store (game state + UI state + AI triggering)
-  ui/
-    Board.tsx     ← SVG board, checkers, dice, controls
-    ChallengeMode.tsx ← Challenge UI with mini board
-  App.tsx         ← Navigation shell (Play / Challenges)
+    mulberry32.ts   ← Seeded PRNG (used by backgammon dice + solitaire shuffles)
+  App.tsx           ← Multi-game navigation shell
 ```
-
-## Board model
-
-26-element number array. Indices 0-23 = points. Index 24 = current player's bar (positive) + opponent bar (negative). Index 25 = current player's borne-off count. Positive = current player, negative = opponent. Flipped on each turn change.
 
 ## Key constraints
 
-- `src/engine/` must never import from `src/ui/` or `src/store/` — enforced by ESLint `no-restricted-imports`
-- PRNG stores `seed + rollIndex` in localStorage for crash-resume reproducibility
-- AI always runs in a Web Worker — main thread never blocked
+- `src/games/*/engine/` must never import from UI or store — enforced by ESLint
+- Each game engine is pure TypeScript, runs in browser, Web Worker, and Deno
+- PRNG stores seed for reproducible games
+- AI always runs in a Web Worker (backgammon); solitaire hints are single-frame
 
 ## Tech stack
 
-- React + TypeScript + Vite
-- Zustand (game + UI state)
-- SVG board (no Canvas, no WebGL)
-- Heuristic AI in Web Worker
+- React 19 + TypeScript + Vite
+- Zustand (per-game stores + shared auth/multiplayer stores)
+- SVG rendering (no Canvas, no WebGL)
+- Supabase (PostgreSQL + real-time + auth + storage)
 - Mulberry32 PRNG
-- localStorage for persistence
-- Vercel for hosting (zero config)
+- localStorage for game persistence
+- Vercel for hosting
 
-## Phase 2 (planned)
+## Database (Supabase)
 
-- Supabase: auth, real-time postgres row subscriptions for async multiplayer
-- Web push VAPID notifications
-- Multi-game dashboard (Words with Friends style)
-- Server-side move validation via Supabase Edge Functions using `src/engine/` directly
+- `profiles`: user info, stats
+- `games`: game state with `game_type` column (backgammon, solitaire, etc.)
+- `game_moves`: audit trail
+- `avatars` storage bucket with RLS
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # dev server at localhost:5173
-npm run build    # production build
-npx tsc --noEmit # type check
-npx eslint src/  # lint (enforces engine isolation)
+npm run dev        # dev server at localhost:5173
+npm run build      # production build
+npx tsc --noEmit   # type check
+npx eslint src/    # lint (enforces engine isolation)
+npx vitest run     # run tests
 ```
