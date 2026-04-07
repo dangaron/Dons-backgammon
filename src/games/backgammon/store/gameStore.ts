@@ -23,6 +23,7 @@ import type { AIDifficulty } from '../engine/ai';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 import { playSound } from '../../../shared/lib/sounds';
 import type { MoveRecord } from '../engine/analysis';
+import { analyzeMove } from '../engine/analysis';
 import { saveGameHistory } from '../../../shared/lib/gameHistory';
 
 const STORAGE_KEY = 'backgammon-game-v2';
@@ -74,12 +75,18 @@ interface GameStore {
   hintMove: import('../engine/types').Move | null;
   hintScore: number | null;
   showingHint: boolean;
+  /** Tutor mode */
+  tutorMode: boolean;
+  tutorWarning: { message: string; error: number; aiMove: import('../engine/types').Move | null } | null;
 
   // Actions
   startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean) => void;
   setAIDifficulty: (difficulty: AIDifficulty) => void;
   requestHint: () => void;
   clearHint: () => void;
+  setTutorMode: (enabled: boolean) => void;
+  confirmTutorWarning: () => void;
+  dismissTutorWarning: () => void;
   performOpeningRoll: () => void;
   rollDiceAction: () => void;
   selectPoint: (point: number) => void;
@@ -154,6 +161,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   hintMove: null,
   hintScore: null,
   showingHint: false,
+  tutorMode: false,
+  tutorWarning: null,
+
+  setTutorMode: (enabled: boolean) => set({ tutorMode: enabled }),
+
+  confirmTutorWarning: () => {
+    // User chose to keep their move — proceed with endTurn
+    set({ tutorWarning: null });
+    get().endTurn();
+  },
+
+  dismissTutorWarning: () => {
+    // User wants to undo — just dismiss the warning
+    set({ tutorWarning: null });
+  },
 
   setAIDifficulty: (difficulty: AIDifficulty) => set({ aiDifficulty: difficulty }),
 
@@ -452,7 +474,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   endTurn: () => {
-    const { gameState, prng, gameMode, turnStartBoard, turnStartDice, currentTurnMoves, moveHistory } = get();
+    const { gameState, prng, gameMode, turnStartBoard, turnStartDice, currentTurnMoves, moveHistory, tutorMode, tutorWarning, aiDifficulty } = get();
+
+    // Tutor mode check: compare player's move to AI best before ending turn
+    if (tutorMode && !tutorWarning && turnStartBoard && turnStartDice && currentTurnMoves.length > 0 && gameState.currentPlayer === 0) {
+      const analysis = analyzeMove(
+        turnStartBoard as import('../engine/types').Board,
+        turnStartDice,
+        currentTurnMoves,
+        gameState.board,
+        moveHistory.length,
+        0,
+        aiDifficulty,
+      );
+      if (analysis.error >= 15) {
+        set({
+          tutorWarning: {
+            message: analysis.rating === 'blunder'
+              ? 'That was a blunder! The AI found a much better move.'
+              : analysis.rating === 'mistake'
+                ? 'The AI found a better move here.'
+                : 'There might be a slightly better move.',
+            error: analysis.error,
+            aiMove: analysis.aiMove,
+          },
+        });
+        return; // Don't end turn yet — wait for user to confirm or undo
+      }
+    }
+
     playSound('turnEnd');
 
     // Record this turn in move history

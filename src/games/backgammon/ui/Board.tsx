@@ -256,6 +256,7 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
     turnUndoStack, turnComplete, undoMove, endTurn,
     openingRoll, openingWinner, performOpeningRoll,
     hintMove, showingHint, requestHint, clearHint,
+    tutorWarning, confirmTutorWarning, dismissTutorWarning,
   } = useGameStore();
 
   const { board, dice, turnPhase, currentPlayer, winner, doublingCube, matchScore, matchLength } = gameState;
@@ -577,10 +578,30 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
           )}
 
           {/* Done button — when turn is complete */}
-          {turnPhase === 'move' && currentPlayer === 0 && turnComplete && (
+          {turnPhase === 'move' && currentPlayer === 0 && turnComplete && !tutorWarning && (
             <button className="action-btn primary" onClick={endTurn}>
               Done
             </button>
+          )}
+
+          {/* Tutor warning — shown instead of Done when tutor detects a bad move */}
+          {tutorWarning && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--opponent-dim)', borderRadius: 10, padding: '6px 12px',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--opponent)' }}>
+                ⚠️ {tutorWarning.message}
+              </span>
+              <button className="action-btn secondary" onClick={() => { dismissTutorWarning(); undoMove(); }}
+                style={{ fontSize: 11, height: 26, padding: '0 8px' }}>
+                ↩ Undo
+              </button>
+              <button className="action-btn primary" onClick={confirmTutorWarning}
+                style={{ fontSize: 11, height: 26, padding: '0 8px' }}>
+                Keep Move
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -84,8 +84,9 @@ export default function App() {
     setShowNewGame(true);
   };
 
-  const handleStartGame = (matchLength: number, cubeEnabled: boolean, difficulty?: 'easy' | 'medium' | 'hard' | 'expert') => {
+  const handleStartGame = (matchLength: number, cubeEnabled: boolean, difficulty?: 'easy' | 'medium' | 'hard' | 'expert', tutorEnabled?: boolean) => {
     if (difficulty) useGameStore.getState().setAIDifficulty(difficulty);
+    useGameStore.getState().setTutorMode(tutorEnabled ?? false);
     startNewGame('vs-ai', matchLength, cubeEnabled);
     setShowNewGame(false);
     setView('backgammon-play');
@@ -239,12 +240,13 @@ const DIFFICULTIES = [
 ];
 
 function NewGameModal({ onStart, onCancel }: {
-  onStart: (matchLength: number, cubeEnabled: boolean, difficulty: 'easy' | 'medium' | 'hard' | 'expert') => void;
+  onStart: (matchLength: number, cubeEnabled: boolean, difficulty: 'easy' | 'medium' | 'hard' | 'expert', tutorEnabled: boolean) => void;
   onCancel: () => void;
 }) {
   const [matchLength, setMatchLength] = useState(1);
   const [cubeEnabled, setCubeEnabled] = useState(true);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'expert'>('medium');
+  const [tutorEnabled, setTutorEnabled] = useState(false);
 
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
@@ -331,8 +333,38 @@ function NewGameModal({ onStart, onCancel }: {
           </button>
         </div>
 
+        {/* Tutor Mode */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 24, padding: '8px 12px',
+          background: 'var(--surface-2)', borderRadius: 12,
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>🎓 Tutor Mode</div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+              Warns you about bad moves
+            </div>
+          </div>
+          <button
+            onClick={() => setTutorEnabled(!tutorEnabled)}
+            style={{
+              width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+              background: tutorEnabled ? 'var(--accent)' : 'var(--surface-2)',
+              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              position: 'absolute', top: 3,
+              left: tutorEnabled ? 24 : 3,
+              width: 20, height: 20, borderRadius: '50%',
+              background: 'white', transition: 'left 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }} />
+          </button>
+        </div>
+
         <button className="action-btn primary" style={{ width: '100%' }}
-          onClick={() => onStart(matchLength, cubeEnabled, difficulty)}>
+          onClick={() => onStart(matchLength, cubeEnabled, difficulty, tutorEnabled)}>
           🚀 Start Game
         </button>
       </div>
