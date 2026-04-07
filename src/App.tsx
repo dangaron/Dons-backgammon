@@ -1,22 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Board } from './ui/Board';
 import { ChallengeMode } from './ui/ChallengeMode';
+import { Dashboard } from './ui/Dashboard';
+import { AuthModal } from './ui/AuthModal';
 import { useGameStore } from './store/gameStore';
+import { useAuthStore } from './store/authStore';
+import { isSupabaseConfigured } from './lib/supabase';
 
-type AppView = 'game' | 'challenges';
+type AppView = 'dashboard' | 'game' | 'challenges' | 'online-game';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 export default function App() {
-  const [view, setView] = useState<AppView>('game');
+  const [view, setView] = useState<AppView>('game'); // default to local game for backward compat
   const [showNewGame, setShowNewGame] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const { startNewGame, gameState } = useGameStore();
+  const { initialize, initialized, user } = useAuthStore();
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+    // Register service worker for push notifications
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  }, [initialize]);
 
   const hasActiveGame = gameState.turnPhase !== 'game-over';
 
   const handleNewGameClick = () => {
-    if (hasActiveGame) {
+    if (hasActiveGame && view === 'game') {
       setShowConfirm(true);
     } else {
       setShowNewGame(true);
@@ -34,12 +49,33 @@ export default function App() {
     setView('game');
   };
 
+  // Show loading while auth initializes (only if Supabase is configured)
+  if (!initialized && isSupabaseConfigured()) {
+    return (
+      <div className="app" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-dim)', fontSize: 13 }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
+      {view === 'dashboard' && (
+        <Dashboard
+          onPlayAI={() => setView('game')}
+          onOpenGame={(_gameId) => {
+            // TODO: open multiplayer game view
+            setView('game');
+          }}
+          onSignIn={() => setShowAuth(true)}
+        />
+      )}
+
       {view === 'game' && (
         <Board
           onChallenges={() => setView('challenges')}
           onNewGame={handleNewGameClick}
+          onDashboard={user ? () => setView('dashboard') : undefined}
         />
       )}
 
@@ -72,6 +108,13 @@ export default function App() {
           onCancel={() => setShowNewGame(false)}
         />
       )}
+
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onGuest={() => { setShowAuth(false); setView('game'); }}
+        />
+      )}
     </div>
   );
 }
@@ -101,7 +144,6 @@ function NewGameModal({ onStart, onCancel }: {
           ))}
         </div>
 
-        {/* Doubling Cube toggle */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           marginBottom: 24, padding: '0 4px',

@@ -263,7 +263,9 @@ interface DragState {
 }
 
 // ── Main Board Component ─────────────────────────────────────────────────────
-export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; onNewGame?: () => void } = {}) {
+export function Board({ onChallenges, onNewGame, onDashboard }: {
+  onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void;
+} = {}) {
   const { theme, toggle: toggleTheme } = useTheme();
   const c = THEMES[theme];
   const {
@@ -899,6 +901,10 @@ export function Board({ onChallenges, onNewGame }: { onChallenges?: () => void; 
 
         <div style={{ flex: 1 }} />
 
+        {onDashboard && (
+          <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
+            onClick={onDashboard}>Games</button>
+        )}
         {onChallenges && (
           <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
             onClick={onChallenges}>Puzzles</button>
