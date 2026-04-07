@@ -75,69 +75,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   signInWithGoogle: async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          scopes: 'openid email profile',
-          queryParams: { prompt: 'consent' },
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) return { error: error.message };
-      if (!data.url) return { error: 'No auth URL returned' };
-
-      // Open popup instead of redirecting
-      const popup = window.open(data.url, 'google-auth', 'width=500,height=600,popup=yes');
-      if (!popup) return { error: 'Popup blocked. Please allow popups for this site.' };
-
-      // Listen for postMessage from the popup with the session tokens
-      return new Promise<{ error?: string }>((resolve) => {
-        let resolved = false;
-
-        const handleMessage = async (event: MessageEvent) => {
-          if (resolved) return;
-          if (event.origin !== window.location.origin) return;
-          if (event.data?.type !== 'supabase-auth') return;
-
-          resolved = true;
-          window.removeEventListener('message', handleMessage);
-          clearInterval(pollInterval);
-
-          // Set the session in the parent's Supabase client
-          const { access_token, refresh_token } = event.data.session;
-          const { data: { session }, error: sessionError } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
-
-          if (session?.user) {
-            set({ user: session.user, session });
-            await get().fetchProfile();
-            resolve({});
-          } else {
-            resolve({ error: sessionError?.message || 'Failed to establish session' });
-          }
-        };
-
-        window.addEventListener('message', handleMessage);
-
-        // Fallback: poll for popup close (user cancelled)
-        const pollInterval = setInterval(() => {
-          if (resolved) { clearInterval(pollInterval); return; }
-          if (popup.closed) {
-            clearInterval(pollInterval);
-            window.removeEventListener('message', handleMessage);
-            if (!resolved) {
-              resolve({ error: 'Sign in was cancelled' });
-            }
-          }
-        }, 1000);
-      });
-    } catch (err) {
-      return { error: err instanceof Error ? err.message : 'Sign in failed' };
-    }
+    // Use standard redirect flow — popup approach doesn't work due to
+    // cross-origin redirect through Google/Supabase nullifying window.opener.
+    // The page redirects to Google, then back. The onAuthStateChange listener
+    // in initialize() picks up the session automatically on return.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) return { error: error.message };
+    return {};
   },
 
   signOut: async () => {
