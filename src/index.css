@@ -23,9 +23,22 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --radius: 16px;
   --radius-sm: 8px;
+  --radius-pill: 9999px;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+  /* Spacing scale (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  /* Error/blocked */
+  --error: rgba(255, 60, 60, 0.5);
+  --error-dim: rgba(255, 60, 60, 0.12);
   --btn-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
   --btn-shadow-sm: 0 2px 0 rgba(0, 0, 0, 0.3);
   /* Solitaire card colors */
