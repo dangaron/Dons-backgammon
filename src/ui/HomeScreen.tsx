@@ -91,27 +91,33 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
           </>
         ) : (
           <>
-            {isSupabaseConfigured() && (
-              <GameCard
-                emoji="👤" title="Sign In"
-                subtitle="Play online, track your stats, challenge friends"
-                onClick={onSignIn}
-                color="var(--accent)"
-              />
-            )}
-            <button
+            <GameCard
+              emoji="🤖" title="Play vs Computer"
+              subtitle="Jump right in — no sign up needed"
               onClick={onPlayAI}
-              style={{
-                width: '100%', padding: '14px 0',
-                background: 'none', border: 'none',
-                color: 'var(--text-muted)', fontSize: 13,
-                cursor: 'pointer', fontFamily: 'var(--font)',
-                textDecoration: 'underline',
-                textUnderlineOffset: 3,
-              }}
-            >
-              Play without signing in (solo only)
-            </button>
+              color="var(--player)"
+            />
+            <GameCard
+              emoji="🧩" title="Challenges"
+              subtitle="Test your backgammon skills"
+              onClick={onChallenges}
+              color="var(--hit)"
+            />
+            {isSupabaseConfigured() && (
+              <button
+                onClick={onSignIn}
+                style={{
+                  width: '100%', marginTop: 8, padding: '14px 0',
+                  background: 'none', border: '1px solid var(--glass-border)',
+                  borderRadius: 12, cursor: 'pointer',
+                  color: 'var(--accent)', fontSize: 13, fontWeight: 600,
+                  fontFamily: 'var(--font)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                👤 Sign in for online play
+              </button>
+            )}
           </>
         )}
       </div>
