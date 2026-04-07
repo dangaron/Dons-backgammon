@@ -22,7 +22,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboard, onSignIn }: HomeScreenProps) {
-  const { user, profile } = useAuthStore();
+  const { user, profile, signOut } = useAuthStore();
   const { theme, toggle: toggleTheme } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
 
@@ -149,18 +149,39 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
         </div>
       )}
 
-      {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        style={{
-          marginTop: 24, background: 'none', border: 'none',
-          color: 'var(--text-dim)', cursor: 'pointer', fontSize: 12,
-          fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 6,
-        }}
-      >
-        {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-        {theme === 'light' ? 'Dark mode' : 'Light mode'}
-      </button>
+      {/* Bottom links */}
+      <div style={{
+        marginTop: 24, display: 'flex', alignItems: 'center', gap: 16,
+      }}>
+        <button
+          onClick={toggleTheme}
+          style={{
+            background: 'none', border: 'none',
+            color: 'var(--text-dim)', cursor: 'pointer', fontSize: 12,
+            fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+          {theme === 'light' ? 'Dark mode' : 'Light mode'}
+        </button>
+
+        {user && (
+          <>
+            <span style={{ color: 'var(--border)', fontSize: 12 }}>|</span>
+            <button
+              onClick={signOut}
+              style={{
+                background: 'none', border: 'none',
+                color: 'var(--text-dim)', cursor: 'pointer', fontSize: 12,
+                fontFamily: 'var(--font)', display: 'flex', alignItems: 'center', gap: 5,
+              }}
+            >
+              <LogOut size={13} />
+              Sign out
+            </button>
+          </>
+        )}
+      </div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
