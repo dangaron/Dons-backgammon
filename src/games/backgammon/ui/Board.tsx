@@ -244,7 +244,7 @@ interface DragState {
 }
 
 // ── Main Board Component ─────────────────────────────────────────────────────
-export function Board({ onChallenges, onNewGame, onDashboard, onQuit }: {
+export function Board({ onChallenges: _onChallenges, onNewGame, onDashboard: _onDashboard, onQuit }: {
   onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void; onQuit?: () => void;
 } = {}) {
   const { theme, toggle: toggleTheme } = useTheme();

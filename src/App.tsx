@@ -19,6 +19,11 @@ import { BridgeBoard } from './games/bridge/ui/BridgeBoard';
 import { BridgeSettings } from './games/bridge/ui/BridgeSettings';
 import { TutorialScreen } from './games/bridge/ui/TutorialScreen';
 import { useBridgeStore } from './games/bridge/store/gameStore';
+import SnakeBoard from './games/snake/ui/SnakeBoard';
+import TetrisBoard from './games/tetris/ui/TetrisBoard';
+import BreakoutBoard from './games/breakout/ui/BreakoutBoard';
+import { MinesweeperBoard } from './games/minesweeper/ui/MinesweeperBoard';
+import { Game2048Board } from './games/2048/ui/Game2048Board';
 import { useGameStore } from './games/backgammon/store/gameStore';
 import { useAuthStore } from './shared/store/authStore';
 import { isSupabaseConfigured } from './shared/lib/supabase';
@@ -49,7 +54,13 @@ type AppView =
   | 'bridge-lobby'
   | 'bridge-play'
   | 'bridge-settings'
-  | 'bridge-tutorial';
+  | 'bridge-tutorial'
+  // Arcade views
+  | 'snake-play'
+  | 'tetris-play'
+  | 'breakout-play'
+  | 'minesweeper-play'
+  | '2048-play';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
@@ -86,6 +97,12 @@ export default function App() {
       case 'bridge':
         setView('bridge-lobby');
         break;
+      // Arcade games go straight to play (no lobby needed)
+      case 'snake': setView('snake-play'); break;
+      case 'tetris': setView('tetris-play'); break;
+      case 'breakout': setView('breakout-play'); break;
+      case 'minesweeper': setView('minesweeper-play'); break;
+      case '2048': setView('2048-play'); break;
     }
   };
 
@@ -141,7 +158,7 @@ export default function App() {
 
       {view === 'backgammon-lobby' && (
         <HomeScreen
-          onPlayAI={() => setView('backgammon-play')}
+          onPlayAI={handleNewGameClick}
           onNewMultiplayer={() => setView('backgammon-dashboard')}
           onChallenges={() => setView('backgammon-challenge-list')}
           onSignIn={() => setShowAuth(true)}
@@ -158,7 +175,6 @@ export default function App() {
       {view === 'backgammon-dashboard' && (
         <Dashboard
           onBack={() => setView('backgammon-lobby')}
-          onPlayAI={() => setView('backgammon-play')}
           onOpenGame={() => {
             setView('backgammon-play');
           }}
@@ -265,6 +281,28 @@ export default function App() {
         />
       )}
 
+      {/* ── Arcade Games ──────────────────────────────────────── */}
+
+      {view === 'snake-play' && (
+        <SnakeBoard onQuit={() => setView('game-select')} />
+      )}
+
+      {view === 'tetris-play' && (
+        <TetrisBoard onQuit={() => setView('game-select')} />
+      )}
+
+      {view === 'breakout-play' && (
+        <BreakoutBoard onQuit={() => setView('game-select')} />
+      )}
+
+      {view === 'minesweeper-play' && (
+        <MinesweeperBoard onQuit={() => setView('game-select')} />
+      )}
+
+      {view === '2048-play' && (
+        <Game2048Board onQuit={() => setView('game-select')} />
+      )}
+
       {showConfirm && (
         <div className="overlay-backdrop" onClick={() => setShowConfirm(false)}>
           <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
@@ -330,160 +368,124 @@ function NewGameModal({ onStart, onCancel }: {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'expert'>('medium');
   const [tutorEnabled, setTutorEnabled] = useState(false);
   const [variant, setVariant] = useState<'standard' | 'nackgammon' | 'hypergammon'>('standard');
+  const selectedVariant = VARIANT_OPTIONS.find((option) => option.key === variant)!;
+  const selectedDifficulty = DIFFICULTIES.find((option) => option.key === difficulty)!;
 
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
-      <div className="overlay-card" onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 380 }}>
-        <div style={{ fontSize: 28, marginBottom: 4 }}>⚔️</div>
-        <h2>New Game</h2>
-
-        {/* Variant selector */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{
-            fontSize: 11, fontWeight: 800, color: 'var(--text-muted)',
-            textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
-          }}>
-            Game Variant
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {VARIANT_OPTIONS.map((v) => (
-              <button
-                key={v.key}
-                onClick={() => setVariant(v.key)}
-                style={{
-                  padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  background: variant === v.key
-                    ? 'linear-gradient(180deg, var(--accent) 0%, #3ab5ad 100%)'
-                    : 'var(--surface-2)',
-                  color: variant === v.key ? 'var(--bg)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font)', fontWeight: 700, fontSize: 13,
-                  textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8,
-                  transition: 'all 0.15s',
-                  boxShadow: variant === v.key ? 'var(--btn-shadow-sm)' : 'none',
-                }}
-              >
-                <span>{v.label}</span>
-                <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.7 }}>{v.desc}</span>
-              </button>
-            ))}
+      <div className="overlay-card new-game-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="new-game-modal__header">
+          <div className="new-game-modal__crest">🎲</div>
+          <div className="new-game-modal__header-copy">
+            <div className="new-game-modal__eyebrow">New Game</div>
+            <h2>Start a Fresh Match</h2>
+            <p>Pick your ruleset, choose an AI level, and roll into the next game.</p>
           </div>
         </div>
 
-        <p style={{ marginTop: 0 }}>Points needed to win the match</p>
+        <div className="new-game-modal__content">
+          <section className="new-game-modal__panel">
+            <div className="new-game-modal__section-title">Game Variant</div>
+            <div className="new-game-modal__stack">
+              {VARIANT_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  className={`new-game-option-card${variant === option.key ? ' active' : ''}`}
+                  onClick={() => setVariant(option.key)}
+                >
+                  <div className="new-game-option-card__row">
+                    <div className="new-game-option-card__title">{option.label}</div>
+                    {variant === option.key && <span className="new-game-option-card__badge">Selected</span>}
+                  </div>
+                  <div className="new-game-option-card__desc">{option.desc}</div>
+                </button>
+              ))}
+            </div>
 
-        <div className="match-selector">
-          {MATCH_LENGTHS.map((n) => (
-            <button
-              key={n}
-              className={`match-option${matchLength === n ? ' active' : ''}`}
-              onClick={() => setMatchLength(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
+            <div className="new-game-modal__section-title" style={{ marginTop: 18 }}>AI Difficulty</div>
+            <div className="new-game-difficulty-grid">
+              {DIFFICULTIES.map((option) => (
+                <button
+                  key={option.key}
+                  className={`new-game-option-card compact${difficulty === option.key ? ' active' : ''}`}
+                  onClick={() => setDifficulty(option.key)}
+                >
+                  <div className="new-game-option-card__row">
+                    <div className="new-game-option-card__title">{option.label}</div>
+                    {difficulty === option.key && <span className="new-game-option-card__badge">On</span>}
+                  </div>
+                  <div className="new-game-option-card__desc">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </section>
 
-        {/* AI Difficulty */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{
-            fontSize: 11, fontWeight: 800, color: 'var(--text-muted)',
-            textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
-          }}>
-            AI Difficulty
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {DIFFICULTIES.map((d) => (
+          <section className="new-game-modal__panel new-game-modal__panel--accent">
+            <div className="new-game-modal__section-title">Match Length</div>
+            <div className="new-game-match-grid">
+              {MATCH_LENGTHS.map((n) => (
+                <button
+                  key={n}
+                  className={`new-game-match-pill${matchLength === n ? ' active' : ''}`}
+                  onClick={() => setMatchLength(n)}
+                >
+                  <span className="new-game-match-pill__value">{n}</span>
+                  <span className="new-game-match-pill__label">pts</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="new-game-toggle-list">
               <button
-                key={d.key}
-                onClick={() => setDifficulty(d.key)}
-                style={{
-                  padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  background: difficulty === d.key
-                    ? 'linear-gradient(180deg, var(--accent) 0%, #3ab5ad 100%)'
-                    : 'var(--surface-2)',
-                  color: difficulty === d.key ? 'var(--bg)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font)', fontWeight: 700, fontSize: 13,
-                  textAlign: 'left',
-                  transition: 'all 0.15s',
-                  boxShadow: difficulty === d.key ? 'var(--btn-shadow-sm)' : 'none',
-                }}
+                className={`new-game-toggle-card${cubeEnabled ? ' active' : ''}`}
+                onClick={() => setCubeEnabled(!cubeEnabled)}
               >
-                <div>{d.label}</div>
-                <div style={{
-                  fontSize: 9, fontWeight: 600, marginTop: 1,
-                  opacity: difficulty === d.key ? 0.8 : 0.6,
-                }}>
-                  {d.desc}
+                <div>
+                  <div className="new-game-toggle-card__title">Doubling Cube</div>
+                  <div className="new-game-toggle-card__desc">Raise the stakes mid-match.</div>
+                </div>
+                <div className={`new-game-toggle-switch${cubeEnabled ? ' active' : ''}`}>
+                  <div className="new-game-toggle-switch__knob" />
                 </div>
               </button>
-            ))}
-          </div>
+
+              <button
+                className={`new-game-toggle-card${tutorEnabled ? ' active' : ''}`}
+                onClick={() => setTutorEnabled(!tutorEnabled)}
+              >
+                <div>
+                  <div className="new-game-toggle-card__title">Tutor Mode</div>
+                  <div className="new-game-toggle-card__desc">Warn me before obvious mistakes.</div>
+                </div>
+                <div className={`new-game-toggle-switch${tutorEnabled ? ' active' : ''}`}>
+                  <div className="new-game-toggle-switch__knob" />
+                </div>
+              </button>
+            </div>
+
+            <div className="new-game-summary">
+              <div className="new-game-summary__label">Selected Loadout</div>
+              <div className="new-game-summary__headline">
+                {selectedVariant.label} • {matchLength}-point match
+              </div>
+              <div className="new-game-summary__details">
+                {selectedDifficulty.label} • {cubeEnabled ? 'Cube On' : 'Cube Off'} • {tutorEnabled ? 'Tutor On' : 'Tutor Off'}
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, padding: '8px 12px',
-          background: 'var(--surface-2)', borderRadius: 12,
-        }}>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>🎲 Doubling Cube</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-              Raise the stakes mid-game
-            </div>
-          </div>
+        <div className="new-game-modal__footer">
+          <button className="action-btn secondary new-game-modal__cancel" onClick={onCancel}>
+            Back
+          </button>
           <button
-            onClick={() => setCubeEnabled(!cubeEnabled)}
-            style={{
-              width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
-              background: cubeEnabled ? 'var(--accent)' : 'var(--surface-2)',
-              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-            }}
+            className="action-btn primary new-game-modal__start"
+            onClick={() => onStart(matchLength, cubeEnabled, difficulty, tutorEnabled, variant)}
           >
-            <div style={{
-              position: 'absolute', top: 3,
-              left: cubeEnabled ? 24 : 3,
-              width: 20, height: 20, borderRadius: '50%',
-              background: 'white', transition: 'left 0.2s',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            }} />
+            Start Match
           </button>
         </div>
-
-        {/* Tutor Mode */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, padding: '8px 12px',
-          background: 'var(--surface-2)', borderRadius: 12,
-        }}>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>🎓 Tutor Mode</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-              Warns you about bad moves
-            </div>
-          </div>
-          <button
-            onClick={() => setTutorEnabled(!tutorEnabled)}
-            style={{
-              width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
-              background: tutorEnabled ? 'var(--accent)' : 'var(--surface-2)',
-              position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-            }}
-          >
-            <div style={{
-              position: 'absolute', top: 3,
-              left: tutorEnabled ? 24 : 3,
-              width: 20, height: 20, borderRadius: '50%',
-              background: 'white', transition: 'left 0.2s',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            }} />
-          </button>
-        </div>
-
-        <button className="action-btn primary" style={{ width: '100%' }}
-          onClick={() => onStart(matchLength, cubeEnabled, difficulty, tutorEnabled, variant)}>
-          🚀 Start Game
-        </button>
       </div>
     </div>
   );

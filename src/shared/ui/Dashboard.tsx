@@ -13,12 +13,11 @@ const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
 interface DashboardProps {
   onBack: () => void;
-  onPlayAI: () => void;
   onOpenGame: (gameId: string) => void;
   onSignIn: () => void;
 }
 
-export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardProps) {
+export function Dashboard({ onBack, onOpenGame, onSignIn }: DashboardProps) {
   const { user } = useAuthStore();
   const { games, loadingGames, loadGames, createGame, joinGame } = useMultiplayerStore();
   const [showCreate, setShowCreate] = useState(false);
@@ -46,8 +45,8 @@ export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardP
           letterSpacing: 1.5, textTransform: 'uppercase',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ fontSize: 16 }}>🎲</span>
-          GAME LOBBY
+          <span style={{ fontSize: 16 }}>🤝</span>
+          PLAY WITH FRIENDS
         </div>
         <div style={{ width: 60 }} />
       </div>
@@ -57,28 +56,58 @@ export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardP
         flex: 1, overflow: 'auto', padding: '16px 20px',
         display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 600, margin: '0 auto', width: '100%',
       }}>
-        {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 8, animation: 'slide-up 0.4s ease-out' }}>
-          <button className="action-btn primary" style={{ flex: 1 }} onClick={onPlayAI}>
-            ⚔️ Play vs AI
-          </button>
+        <section style={{
+          background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.14), rgba(255, 209, 102, 0.08))',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 20,
+          padding: '18px 18px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+          animation: 'slide-up 0.4s ease-out',
+        }}>
+          <div>
+            <div style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+              letterSpacing: 1.6,
+              marginBottom: 6,
+            }}>
+              Multiplayer Lobby
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)', marginBottom: 4 }}>
+              Continue a match or start a new one
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 600, lineHeight: 1.45 }}>
+              Your current games live here. To start something new, create an invite code or join one from a friend.
+            </div>
+          </div>
+
           {user ? (
-            <>
-              <button className="action-btn secondary" style={{ flex: 1 }}
-                onClick={() => setShowCreate(true)}>
-                🎯 Create
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                className="action-btn primary"
+                style={{ width: '100%', height: 52, fontSize: 14 }}
+                onClick={() => setShowCreate(true)}
+              >
+                🎯 Create Game
               </button>
-              <button className="action-btn secondary" style={{ flex: 1 }}
-                onClick={() => setShowJoin(true)}>
-                🔗 Join
+              <button
+                className="action-btn secondary"
+                style={{ width: '100%', height: 52, fontSize: 14 }}
+                onClick={() => setShowJoin(true)}
+              >
+                🔗 Join by Code
               </button>
-            </>
+            </div>
           ) : (
-            <button className="action-btn secondary" style={{ flex: 1 }} onClick={onSignIn}>
-              🔐 Sign In
+            <button className="action-btn primary" style={{ width: '100%', height: 52, fontSize: 14 }} onClick={onSignIn}>
+              🔐 Sign In to Play Online
             </button>
           )}
-        </div>
+        </section>
 
         {/* Invite result */}
         {inviteResult && (
@@ -110,23 +139,40 @@ export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardP
         )}
 
         {/* Active games */}
-        {activeGames.length > 0 && (
-          <section>
-            <h3 style={{
-              fontSize: 12, fontWeight: 800, color: 'var(--text-muted)',
-              textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <span style={{ fontSize: 14 }}>⚡</span> Your Games
-            </h3>
+        <section>
+          <h3 style={{
+            fontSize: 12, fontWeight: 800, color: 'var(--text-muted)',
+            textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 14 }}>⚡</span> Active Games
+          </h3>
+          {activeGames.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {activeGames.map((game, i) => (
                 <GameCard key={game.id} game={game} myId={user!.id}
                   onClick={() => onOpenGame(game.id)} index={i} />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 18,
+              padding: '24px 18px',
+              textAlign: 'center',
+              color: 'var(--text-dim)',
+            }}>
+              <div style={{ fontSize: 34, marginBottom: 10 }}>🎲</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 6 }}>
+                No active matches
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.45 }}>
+                Create a game to send an invite code, or join one with a friend&apos;s code.
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Completed games */}
         {completedGames.length > 0 && (
@@ -145,18 +191,6 @@ export function Dashboard({ onBack, onPlayAI, onOpenGame, onSignIn }: DashboardP
               ))}
             </div>
           </section>
-        )}
-
-        {/* Empty state */}
-        {!loadingGames && activeGames.length === 0 && completedGames.length === 0 && user && (
-          <div style={{
-            textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)',
-            animation: 'bounce-in 0.6s ease-out',
-          }}>
-            <div style={{ fontSize: 48, marginBottom: 12, animation: 'float 3s ease-in-out infinite' }}>🎲</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', marginBottom: 4 }}>No games yet!</div>
-            <div style={{ fontSize: 13, fontWeight: 500 }}>Create a game or join one with a code</div>
-          </div>
         )}
 
         {loadingGames && (

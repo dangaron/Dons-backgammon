@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useTheme } from '../lib/useTheme';
 import {
-  Users, Globe, Puzzle, ClipboardList, Settings,
+  Users, Puzzle, ClipboardList, Settings,
   LogIn, Sun, Moon, LogOut, Swords, Flame, ArrowLeft,
 } from 'lucide-react';
 
@@ -112,19 +112,11 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
             />
             <GameCard
               icon={<Users size={22} />}
-              title="Play vs Friend"
-              subtitle="Challenge a friend"
+              title="Play vs Human"
+              subtitle="Create or join an online match"
               onClick={onNewMultiplayer}
               color="var(--accent)"
               delay={1}
-            />
-            <GameCard
-              icon={<Globe size={22} />}
-              title="Play vs Random"
-              subtitle="Find an opponent online"
-              onClick={onNewMultiplayer}
-              color="var(--purple)"
-              delay={2}
             />
             <GameCard
               icon={<Puzzle size={22} />}
@@ -132,10 +124,10 @@ export function HomeScreen({ onPlayAI, onNewMultiplayer, onChallenges, onDashboa
               subtitle="Solve puzzles, earn rewards"
               onClick={onChallenges}
               color="var(--hit)"
-              delay={3}
+              delay={2}
               badge="NEW"
             />
-            <div style={{ display: 'flex', gap: 10, animation: 'slide-up 0.5s ease-out 0.35s both' }}>
+            <div style={{ display: 'flex', gap: 10, animation: 'slide-up 0.5s ease-out 0.27s both' }}>
               <SmallCard icon={<ClipboardList size={16} />} label="My Games" onClick={onDashboard} />
               <SmallCard icon={<Settings size={16} />} label="Settings" onClick={() => onSettings?.()} />
             </div>
@@ -362,4 +354,3 @@ function StatBadge({ value, label, suffix, icon, delay }: {
     </div>
   );
 }
-
