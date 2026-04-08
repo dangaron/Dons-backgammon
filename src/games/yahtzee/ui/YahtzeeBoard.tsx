@@ -1,11 +1,14 @@
 /**
- * Yahtzee game board — dice area + scorecard.
+ * Yahtzee game board — dice area + scorecard + achievement toasts + analysis.
  */
 
+import { useState } from 'react';
 import { useYahtzeeStore } from '../store/gameStore';
 import { totalScore } from '../engine/scoring';
 import { DiceRow } from './DiceRenderer';
 import { Scorecard } from './Scorecard';
+import { AchievementToast } from './AchievementToast';
+import { GameAnalysis } from './GameAnalysis';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 interface YahtzeeBoardProps {
@@ -16,7 +19,10 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
   const {
     gameState, potentialScores, isAIThinking, diceAnimating,
     roll, toggleDieHold, score, startNewGame,
+    newAchievements, dismissAchievement, settings,
   } = useYahtzeeStore();
+
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const isPlayerTurn = gameState.currentPlayer === 0;
   const canRoll = gameState.rollsLeft > 0 && !gameState.gameOver && isPlayerTurn && !isAIThinking;
@@ -27,12 +33,32 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
     gameState.rollsLeft === 2 ? 'Roll Again (2 left)' :
     gameState.rollsLeft === 1 ? 'Last Roll' : 'Choose a Category';
 
+  // Show potential scores based on settings
+  const displayPotentials = settings.showPotentialScores ? potentialScores : {};
+
+  if (showAnalysis) {
+    return (
+      <GameAnalysis
+        onPlayAgain={() => setShowAnalysis(false)}
+        onBack={() => setShowAnalysis(false)}
+      />
+    );
+  }
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       flex: 1, background: 'var(--bg)', padding: '8px 0',
       overflow: 'auto',
     }}>
+      {/* Achievement toast */}
+      {newAchievements.length > 0 && (
+        <AchievementToast
+          achievement={newAchievements[0]}
+          onDismiss={() => dismissAchievement(newAchievements[0].id)}
+        />
+      )}
+
       {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -44,8 +70,13 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
           <ArrowLeft size={14} /> Back
         </button>
 
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>
-          Turn {Math.min(gameState.turn, 13)} / 13
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>
+            Turn {Math.min(gameState.turn, 13)} / 13
+          </div>
+          <div style={{ fontSize: 9, color: 'var(--text-dim)', fontWeight: 600 }}>
+            Game #{gameState.seed}
+          </div>
         </div>
 
         <button
@@ -101,7 +132,7 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
               cursor: canRoll ? 'pointer' : 'default',
             }}
           >
-            🎲 {rollLabel}
+            {'\uD83C\uDFB2'} {rollLabel}
           </button>
         </div>
 
@@ -121,7 +152,7 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
         <Scorecard
           players={gameState.players}
           currentPlayer={gameState.currentPlayer}
-          potentialScores={potentialScores}
+          potentialScores={displayPotentials}
           onScore={score}
           canScore={canScore}
           isAI={gameState.gameMode === 'vs-ai'}
@@ -143,7 +174,7 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
             minWidth: 280,
           }}>
             <div style={{ fontSize: 48, marginBottom: 8 }}>
-              {gameState.winner === 0 ? '🎉' : gameState.winner === 1 ? '😔' : '🤝'}
+              {gameState.winner === 0 ? '\uD83C\uDF89' : gameState.winner === 1 ? '\uD83D\uDE14' : '\uD83E\uDD1D'}
             </div>
             <h2 style={{ color: 'var(--text)', margin: '0 0 8px', fontSize: 24, fontWeight: 900 }}>
               {gameState.winner === 0 ? 'You Win!' :
@@ -166,16 +197,25 @@ export function YahtzeeBoard({ onQuit }: YahtzeeBoardProps) {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="action-btn primary"
+                  style={{ flex: 1 }}
+                  onClick={() => startNewGame(gameState.gameMode)}
+                >
+                  Play Again
+                </button>
+                <button className="action-btn secondary" style={{ flex: 1 }} onClick={onQuit}>
+                  Back
+                </button>
+              </div>
               <button
-                className="action-btn primary"
-                style={{ flex: 1 }}
-                onClick={() => startNewGame(gameState.gameMode)}
+                className="action-btn secondary"
+                style={{ width: '100%' }}
+                onClick={() => setShowAnalysis(true)}
               >
-                Play Again
-              </button>
-              <button className="action-btn secondary" style={{ flex: 1 }} onClick={onQuit}>
-                Back
+                View Analysis
               </button>
             </div>
           </div>

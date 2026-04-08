@@ -4,7 +4,7 @@
  * Pure functions, no UI imports.
  */
 
-import type { BridgeState, CardId, Seat, BidAction, Bid, Contract } from './types';
+import type { BridgeState, CardId, Seat, BidAction, Bid } from './types';
 import { nextSeat, partnerOf, teamOf, sameTeam } from './types';
 import { suitOf, rankOf, hcpOf, rankLabel, suitSymbol } from './deck';
 
@@ -159,7 +159,7 @@ function analyzeSingleBid(
   if (!hasPriorBid) {
     if (hcp >= 12 && bid.type === 'pass') {
       return {
-        suggested: { type: 'bid', level: 1 as 1, suit: getLongestSuit(suitLengths) },
+        suggested: { type: 'bid', level: 1 as const, suit: getLongestSuit(suitLengths) },
         wasOptimal: false,
         explanation: `With ${hcp} HCP, you should open the bidding rather than pass`,
       };
@@ -175,7 +175,7 @@ function analyzeSingleBid(
       const b = bid as Bid;
       if (b.suit !== 'notrump' || b.level !== 1) {
         return {
-          suggested: { type: 'bid', level: 1 as 1, suit: 'notrump' },
+          suggested: { type: 'bid', level: 1 as const, suit: 'notrump' },
           wasOptimal: false,
           explanation: `With ${hcp} HCP and a balanced hand, 1NT is the standard opening`,
         };
@@ -237,7 +237,6 @@ function analyzePlayDecisions(
           trickNumber,
           trump,
           isHumanDeclarer,
-          contract,
         );
         if (analysis) {
           analyses.push(analysis);
@@ -261,7 +260,6 @@ function analyzeSinglePlay(
   trickNumber: number,
   trump: string,
   isHumanDeclarer: boolean,
-  _contract: Contract,
 ): BridgePlayAnalysis | null {
   const position = currentTrickCards.length;
 
@@ -272,7 +270,7 @@ function analyzeSinglePlay(
 
   // Following suit
   if (position >= 2 && position <= 4) {
-    return analyzeFollowPlay(entry, currentTrickCards, trickNumber, trump, isHumanDeclarer);
+    return analyzeFollowPlay(entry, currentTrickCards, trickNumber, trump);
   }
 
   return null;
@@ -337,7 +335,6 @@ function analyzeFollowPlay(
   trickCards: PlayHistoryEntry[],
   trickNumber: number,
   trump: string,
-  _isHumanDeclarer: boolean,
 ): BridgePlayAnalysis | null {
   const card = entry.card;
   const cardRank = rankOf(card);

@@ -1,17 +1,19 @@
 /**
- * Yahtzee lobby — new game, continue, game mode selection.
+ * Yahtzee lobby — new game, continue, game mode selection, stats summary.
  */
 
 import { useYahtzeeStore } from '../store/gameStore';
-import { SquareStack, ArrowLeft, Play, Swords, Users } from 'lucide-react';
+import { ACHIEVEMENTS, getUnlockedAchievements } from '../engine/stats';
+import { SquareStack, ArrowLeft, Play, Swords, Users, Settings } from 'lucide-react';
 
 interface YahtzeeLobbyProps {
   onPlay: () => void;
   onBack: () => void;
+  onSettings: () => void;
 }
 
-export function YahtzeeLobby({ onPlay, onBack }: YahtzeeLobbyProps) {
-  const { startNewGame, resumeGame, hasSavedGame } = useYahtzeeStore();
+export function YahtzeeLobby({ onPlay, onBack, onSettings }: YahtzeeLobbyProps) {
+  const { startNewGame, resumeGame, hasSavedGame, stats } = useYahtzeeStore();
 
   const handleNewGame = (mode: 'vs-ai' | 'vs-human-local') => {
     startNewGame(mode);
@@ -22,6 +24,12 @@ export function YahtzeeLobby({ onPlay, onBack }: YahtzeeLobbyProps) {
     resumeGame();
     onPlay();
   };
+
+  const unlockedCount = getUnlockedAchievements(stats).length;
+  const totalAchievements = ACHIEVEMENTS.length;
+  const winRate = stats.gamesPlayed > 0
+    ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
+    : 0;
 
   return (
     <div style={{
@@ -42,6 +50,21 @@ export function YahtzeeLobby({ onPlay, onBack }: YahtzeeLobbyProps) {
         }}
       >
         <ArrowLeft size={14} /> All Games
+      </button>
+
+      {/* Settings gear icon */}
+      <button
+        onClick={onSettings}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          background: 'var(--surface)', border: '1px solid var(--glass-border)',
+          borderRadius: 10, padding: '6px 10px',
+          color: 'var(--text-muted)', cursor: 'pointer',
+          fontFamily: 'var(--font)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <Settings size={18} />
       </button>
 
       {/* Header */}
@@ -104,6 +127,68 @@ export function YahtzeeLobby({ onPlay, onBack }: YahtzeeLobbyProps) {
           delay={hasSavedGame ? 2 : 1}
         />
       </div>
+
+      {/* Stats section */}
+      {stats.gamesPlayed > 0 && (
+        <div style={{
+          width: '100%', maxWidth: 360, marginTop: 24,
+          animation: 'slide-up 0.6s ease-out 0.2s both',
+        }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
+            textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
+          }}>
+            Your Stats
+          </div>
+          <div style={{
+            background: 'var(--surface)', border: '1px solid var(--glass-border)',
+            borderRadius: 14, padding: 16,
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+          }}>
+            <StatItem label="High Score" value={String(stats.highScore)} />
+            <StatItem label="Total Yahtzees" value={String(stats.totalYahtzees)} />
+            <StatItem label="Win Rate" value={`${winRate}%`} />
+            <StatItem label="Best Streak" value={String(stats.bestStreak)} />
+          </div>
+
+          {/* Achievement progress */}
+          <div style={{
+            marginTop: 10,
+            background: 'var(--surface)', border: '1px solid var(--glass-border)',
+            borderRadius: 14, padding: '12px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>
+              Achievements
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 80, height: 6, borderRadius: 3,
+                background: 'var(--surface-2)', overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%', borderRadius: 3,
+                  width: `${Math.round((unlockedCount / totalAchievements) * 100)}%`,
+                  background: 'var(--accent)',
+                  transition: 'width 0.5s ease-out',
+                }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text)' }}>
+                {unlockedCount}/{totalAchievements}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text)' }}>{value}</div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', marginTop: 2 }}>{label}</div>
     </div>
   );
 }

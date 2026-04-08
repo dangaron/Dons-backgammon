@@ -13,8 +13,12 @@ import { SolitaireSettings } from './games/solitaire/ui/SolitaireSettings';
 import { useSolitaireStore } from './games/solitaire/store/gameStore';
 import { YahtzeeLobby } from './games/yahtzee/ui/YahtzeeLobby';
 import { YahtzeeBoard } from './games/yahtzee/ui/YahtzeeBoard';
+import { YahtzeeSettings } from './games/yahtzee/ui/YahtzeeSettings';
 import { BridgeLobby } from './games/bridge/ui/BridgeLobby';
 import { BridgeBoard } from './games/bridge/ui/BridgeBoard';
+import { BridgeSettings } from './games/bridge/ui/BridgeSettings';
+import { TutorialScreen } from './games/bridge/ui/TutorialScreen';
+import { useBridgeStore } from './games/bridge/store/gameStore';
 import { useGameStore } from './games/backgammon/store/gameStore';
 import { useAuthStore } from './shared/store/authStore';
 import { isSupabaseConfigured } from './shared/lib/supabase';
@@ -39,9 +43,12 @@ type AppView =
   // Yahtzee views
   | 'yahtzee-lobby'
   | 'yahtzee-play'
+  | 'yahtzee-settings'
   // Bridge views
   | 'bridge-lobby'
-  | 'bridge-play';
+  | 'bridge-play'
+  | 'bridge-settings'
+  | 'bridge-tutorial';
 
 const MATCH_LENGTHS = [1, 3, 5, 7, 11, 15];
 
@@ -211,11 +218,16 @@ export default function App() {
         <YahtzeeLobby
           onPlay={() => setView('yahtzee-play')}
           onBack={() => setView('game-select')}
+          onSettings={() => setView('yahtzee-settings')}
         />
       )}
 
       {view === 'yahtzee-play' && (
         <YahtzeeBoard onQuit={() => setView('yahtzee-lobby')} />
+      )}
+
+      {view === 'yahtzee-settings' && (
+        <YahtzeeSettings onBack={() => setView('yahtzee-lobby')} />
       )}
 
       {/* ── Bridge views ─────────────────────────────────────────── */}
@@ -224,11 +236,26 @@ export default function App() {
         <BridgeLobby
           onPlay={() => setView('bridge-play')}
           onBack={() => setView('game-select')}
+          onSettings={() => setView('bridge-settings')}
+          onTutorial={() => setView('bridge-tutorial')}
         />
       )}
 
       {view === 'bridge-play' && (
         <BridgeBoard onQuit={() => setView('bridge-lobby')} />
+      )}
+
+      {view === 'bridge-settings' && (
+        <BridgeSettings onBack={() => setView('bridge-lobby')} />
+      )}
+
+      {view === 'bridge-tutorial' && (
+        <TutorialScreen
+          onBack={() => setView('bridge-lobby')}
+          onStartTutorial={(id) => {
+            useBridgeStore.getState().startTutorial(id);
+          }}
+        />
       )}
 
       {showConfirm && (

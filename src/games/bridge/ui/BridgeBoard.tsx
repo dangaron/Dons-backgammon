@@ -2,12 +2,16 @@
  * Bridge game board — 4-player layout with bidding and trick play.
  */
 
+import { useState } from 'react';
 import { useBridgeStore } from '../store/gameStore';
 import type { BridgeState, Seat, CardId, BidAction, Bid } from '../engine/types';
 import { SEATS, BID_SUITS, nextSeat, teamOf } from '../engine/types';
 import { suitOf, rankOf, rankLabel, suitSymbol, suitColor, bidSuitSymbol, sortHand } from '../engine/deck';
 import { isLegalBid } from '../engine/game';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { analyzeHand } from '../engine/analysis';
+import { ArrowLeft, RotateCcw, BarChart2 } from 'lucide-react';
+import { AchievementToast } from './AchievementToast';
+import { HandAnalysis } from './HandAnalysis';
 
 interface BridgeBoardProps {
   onQuit: () => void;
@@ -21,12 +25,31 @@ const SEAT_LABELS: Record<Seat, string> = {
 };
 
 export function BridgeBoard({ onQuit }: BridgeBoardProps) {
-  const { gameState, legalCards, makeBid, playCardAction, startNewGame } = useBridgeStore();
+  const {
+    gameState, legalCards, makeBid, playCardAction, startNewGame,
+    newAchievements, dismissAchievement,
+    settings, playHistory,
+  } = useBridgeStore();
   const { phase, humanSeat, contract, dummy, currentPlayer, currentTrick, tricksWon } = gameState;
+
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const isHumanTurn = phase === 'bidding'
     ? gameState.currentBidder === humanSeat
     : currentPlayer === humanSeat || (currentPlayer === dummy && contract?.declarer === humanSeat);
+
+  // Compute analysis when needed
+  const analysis = showAnalysis ? analyzeHand(gameState, playHistory) : null;
+
+  if (showAnalysis && analysis) {
+    return (
+      <HandAnalysis
+        analysis={analysis}
+        onNewHand={() => { setShowAnalysis(false); startNewGame(); }}
+        onBack={() => setShowAnalysis(false)}
+      />
+    );
+  }
 
   return (
     <div style={{
@@ -34,6 +57,14 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
       flex: 1, background: 'var(--bg)', padding: '8px',
       overflow: 'hidden',
     }}>
+      {/* Achievement toast */}
+      {newAchievements.length > 0 && (
+        <AchievementToast
+          achievement={newAchievements[0]}
+          onDismiss={dismissAchievement}
+        />
+      )}
+
       {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -46,8 +77,12 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
         </button>
 
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', display: 'flex', gap: 16 }}>
-          <span>N/S: {tricksWon.ns}</span>
-          <span>E/W: {tricksWon.ew}</span>
+          {settings.showTrickCount && (
+            <>
+              <span>N/S: {tricksWon.ns}</span>
+              <span>E/W: {tricksWon.ew}</span>
+            </>
+          )}
           {contract && (
             <span style={{ color: 'var(--accent)' }}>
               {contract.level}{bidSuitSymbol(contract.suit)}
@@ -66,7 +101,7 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
       {/* Table area */}
       <div style={{
         flex: 1, position: 'relative',
-        background: 'var(--board-bg)',
+        background: settings.tableColor || 'var(--board-bg)',
         borderRadius: 16,
         minHeight: 300,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -110,7 +145,7 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
         )}
 
         {/* Bidding display */}
-        {phase === 'bidding' && (
+        {phase === 'bidding' && settings.showBiddingHistory && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>
               Bidding
@@ -135,6 +170,18 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
             </div>
           </div>
         )}
+
+        {/* Minimal bidding indicator when history is hidden */}
+        {phase === 'bidding' && !settings.showBiddingHistory && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>
+              Bidding
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>
+              {gameState.bidHistory.length} bids placed
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dummy's hand (visible when playing) */}
@@ -148,6 +195,7 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
             playable={currentPlayer === dummy && contract?.declarer === humanSeat}
             legalCards={currentPlayer === dummy ? legalCards : []}
             onPlay={playCardAction}
+            showPlayableHighlight={settings.showPlayableCards}
             small
           />
         </div>
@@ -160,6 +208,7 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
           playable={phase === 'playing' && currentPlayer === humanSeat}
           legalCards={currentPlayer === humanSeat ? legalCards : []}
           onPlay={playCardAction}
+          showPlayableHighlight={settings.showPlayableCards}
         />
       </div>
 
@@ -199,12 +248,24 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
             <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
               N/S: {gameState.score.ns} | E/W: {gameState.score.ew}
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="action-btn primary" style={{ flex: 1 }} onClick={startNewGame}>
-                New Hand
-              </button>
-              <button className="action-btn secondary" style={{ flex: 1 }} onClick={onQuit}>
-                Back
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="action-btn primary" style={{ flex: 1 }} onClick={startNewGame}>
+                  New Hand
+                </button>
+                <button className="action-btn secondary" style={{ flex: 1 }} onClick={onQuit}>
+                  Back
+                </button>
+              </div>
+              <button
+                className="action-btn secondary"
+                onClick={() => setShowAnalysis(true)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: 6,
+                }}
+              >
+                <BarChart2 size={14} /> View Analysis
               </button>
             </div>
           </div>
@@ -216,11 +277,12 @@ export function BridgeBoard({ onQuit }: BridgeBoardProps) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function HandDisplay({ hand, playable, legalCards, onPlay, small }: {
+function HandDisplay({ hand, playable, legalCards, onPlay, showPlayableHighlight = true, small }: {
   hand: CardId[];
   playable: boolean;
   legalCards: CardId[];
   onPlay: (card: CardId) => void;
+  showPlayableHighlight?: boolean;
   small?: boolean;
 }) {
   const cardW = small ? 38 : 48;
@@ -238,6 +300,7 @@ function HandDisplay({ hand, playable, legalCards, onPlay, small }: {
         const color = suitColor(suit);
         const isLegal = legalCards.includes(cardId);
         const canPlay = playable && isLegal;
+        const highlight = showPlayableHighlight && canPlay;
 
         return (
           <div
@@ -247,18 +310,18 @@ function HandDisplay({ hand, playable, legalCards, onPlay, small }: {
               width: cardW, height: cardH,
               borderRadius: 6,
               background: 'var(--card-face)',
-              border: `1.5px solid ${canPlay ? 'var(--card-highlight)' : 'var(--card-border)'}`,
+              border: `1.5px solid ${highlight ? 'var(--card-highlight)' : 'var(--card-border)'}`,
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               justifyContent: 'center',
               cursor: canPlay ? 'pointer' : 'default',
               opacity: playable && !isLegal ? 0.4 : 1,
               marginLeft: i > 0 ? -overlap + cardW : 0,
-              marginRight: i > 0 ? 0 : 0,
+              marginRight: 0,
               position: 'relative',
               zIndex: i,
               transition: 'transform 0.15s, box-shadow 0.15s',
-              boxShadow: canPlay ? '0 0 8px var(--card-highlight)' : '0 1px 3px rgba(0,0,0,0.2)',
-              transform: canPlay ? 'translateY(-4px)' : 'none',
+              boxShadow: highlight ? '0 0 8px var(--card-highlight)' : '0 1px 3px rgba(0,0,0,0.2)',
+              transform: highlight ? 'translateY(-4px)' : 'none',
               flexShrink: 0,
               fontSize: small ? 10 : 13,
               fontWeight: 800,
