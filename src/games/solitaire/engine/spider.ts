@@ -15,7 +15,7 @@
  * - Scoring: +100 per completed sequence, -1 per move.
  */
 
-import type { CardId, Suit } from './types';
+import type { CardId } from './types';
 import { suitOf, rankOf, shuffle } from './deck';
 import { generateSeed } from '../../../prng/mulberry32';
 
@@ -61,13 +61,6 @@ const SCORE_COMPLETED_SEQUENCE = 100;
 const SCORE_PER_MOVE = -1;
 
 // ── Deck creation for Spider ──────────────────────────────────────────────────
-
-const SUIT_MAP: Record<number, Suit> = {
-  0: 'hearts',
-  1: 'diamonds',
-  2: 'clubs',
-  3: 'spades',
-};
 
 /**
  * Build a 104-card deck for Spider, remapping suits based on difficulty.

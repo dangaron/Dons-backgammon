@@ -109,9 +109,13 @@ const DIFF_CONFIG = {
 
 /* ── Main screen ─────────────────────────────────────────────── */
 
+const FILTER_OPTIONS = ['all', 'easy', 'medium', 'hard', 'expert'] as const;
+type DiffFilter = typeof FILTER_OPTIONS[number];
+
 export function ChallengeListScreen({ onBack, onPlayChallenge }: ChallengeListScreenProps) {
   const [dailyChallenges] = useState(() => getDailyChallenges());
   const [progress, setProgress] = useState<DailyProgress>(() => loadDailyProgress());
+  const [filter, setFilter] = useState<DiffFilter>('all');
   const maxScore = getMaxScore();
 
   useEffect(() => {
@@ -252,13 +256,38 @@ export function ChallengeListScreen({ onBack, onPlayChallenge }: ChallengeListSc
         )}
       </div>
 
+      {/* Difficulty filter tabs */}
+      <div style={{
+        display: 'flex', gap: 6, padding: '0 20px 8px',
+        maxWidth: 440, margin: '0 auto', width: '100%',
+        overflowX: 'auto',
+      }}>
+        {FILTER_OPTIONS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            style={{
+              padding: '4px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: filter === f ? 'var(--accent)' : 'var(--surface-2)',
+              color: filter === f ? 'var(--bg)' : 'var(--text-muted)',
+              fontSize: 11, fontWeight: 700, fontFamily: 'var(--font)',
+              textTransform: 'uppercase', letterSpacing: 0.5,
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+              boxShadow: filter === f ? 'var(--btn-shadow-sm)' : 'none',
+            }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
       {/* Challenge list */}
       <div style={{
         flex: 1, overflow: 'auto', padding: '8px 20px 20px',
         display: 'flex', flexDirection: 'column', gap: 10,
         maxWidth: 440, margin: '0 auto', width: '100%',
       }}>
-        {dailyChallenges.map((dc, i) => {
+        {dailyChallenges.filter(dc => filter === 'all' || dc.challenge.difficulty === filter).map((dc, i) => {
           const score = progress.scores[dc.challenge.id];
           const solved = score?.solved || false;
           const attempted = (score?.attempts || 0) > 0;

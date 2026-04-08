@@ -3,7 +3,7 @@
  * All state transitions are immutable.
  */
 
-import type { CardId, Suit, Rank, Color } from './types';
+import type { CardId } from './types';
 import { createDeck, shuffle, suitIndex, rankOf, colorOf } from './deck';
 import { generateSeed } from '../../../prng/mulberry32';
 
@@ -79,11 +79,6 @@ export function createFreeCellState(seed?: number): FreeCellState {
 /** Get the top card of a tableau column, or undefined if empty. */
 function topOfColumn(col: CardId[]): CardId | undefined {
   return col.length > 0 ? col[col.length - 1] : undefined;
-}
-
-/** Get the top card of a foundation pile, or undefined if empty. */
-function topOfFoundation(pile: CardId[]): CardId | undefined {
-  return pile.length > 0 ? pile[pile.length - 1] : undefined;
 }
 
 /** Check if a card can be placed on a tableau column (alternating color, descending rank). */

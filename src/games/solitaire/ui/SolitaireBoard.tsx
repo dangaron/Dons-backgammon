@@ -28,7 +28,8 @@ interface SolitaireBoardProps {
 }
 
 export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
-  const { gameState, makeMove, undo, undoStack, requestHint, hintMove, clearHint } = useSolitaireStore();
+  const { klondikeState, makeMove, undo, undoStack, requestHint, hintMove, clearHint } = useSolitaireStore();
+  const gameState = klondikeState!;
   const [selected, setSelected] = useState<{ pile: string; index: number } | null>(null);
 
   const legalMoves = useMemo(() => getLegalMoves(gameState), [gameState]);
@@ -54,7 +55,7 @@ export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
 
   // Calculate max tableau height for dynamic SVG sizing
   const maxTableauCards = useMemo(() => {
-    return Math.max(...gameState.tableau.map(p =>
+    return Math.max(...gameState.tableau.map((p: { faceDown: unknown[]; faceUp: unknown[] }) =>
       p.faceDown.length * FACE_DOWN_OFFSET + p.faceUp.length * FACE_UP_OFFSET
     ), CARD_H);
   }, [gameState]);
@@ -173,15 +174,16 @@ export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
 
   const hintSource = useMemo(() => {
     if (!hintMove) return null;
-    switch (hintMove.type) {
+    const hint = hintMove as SolitaireMove;
+    switch (hint.type) {
       case 'waste-to-tableau':
       case 'waste-to-foundation':
         return 'waste';
       case 'tableau-to-tableau':
       case 'tableau-to-foundation':
-        return `tableau-${hintMove.from}`;
+        return `tableau-${hint.from}`;
       case 'foundation-to-tableau':
-        return `foundation-${hintMove.from}`;
+        return `foundation-${hint.from}`;
       case 'draw':
         return 'stock';
       case 'recycle':
@@ -231,7 +233,7 @@ export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
           }} title="Undo">
             <Undo2 size={14} />
           </button>
-          <button onClick={() => useSolitaireStore.getState().startNewGame(gameState.drawMode)} className="action-btn secondary" style={{
+          <button onClick={() => useSolitaireStore.getState().startNewGame('klondike', { drawMode: gameState.drawMode })} className="action-btn secondary" style={{
             padding: '6px 8px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 3,
           }} title="New Game">
             <RotateCcw size={14} />
@@ -407,7 +409,7 @@ export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
               <button
                 className="action-btn primary"
                 style={{ flex: 1 }}
-                onClick={() => useSolitaireStore.getState().startNewGame(gameState.drawMode)}
+                onClick={() => useSolitaireStore.getState().startNewGame('klondike', { drawMode: gameState.drawMode })}
               >
                 New Game
               </button>
@@ -440,7 +442,7 @@ export function SolitaireBoard({ onQuit }: SolitaireBoardProps) {
               <button
                 className="action-btn primary"
                 style={{ flex: 1 }}
-                onClick={() => useSolitaireStore.getState().startNewGame(gameState.drawMode)}
+                onClick={() => useSolitaireStore.getState().startNewGame('klondike', { drawMode: gameState.drawMode })}
               >
                 New Game
               </button>

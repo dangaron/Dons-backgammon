@@ -75,11 +75,11 @@ export function SolitaireSettings({ onBack }: SolitaireSettingsProps) {
   // Read settings from store, falling back to defaults
   const settings: Record<string, boolean | string> = {
     ...DEFAULT_SETTINGS,
-    ...((store as Record<string, unknown>).settings as Record<string, boolean | string> || {}),
+    ...((store as unknown as Record<string, unknown>).settings as Record<string, boolean | string> || {}),
   };
 
   const setSetting = (key: SettingKey, value: boolean | string) => {
-    const updateSettings = (store as Record<string, unknown>).updateSettings as
+    const updateSettings = (store as unknown as Record<string, unknown>).updateSettings as
       ((patch: Record<string, boolean | string>) => void) | undefined;
     if (updateSettings) {
       updateSettings({ [key]: value });

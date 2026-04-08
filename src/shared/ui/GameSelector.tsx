@@ -10,13 +10,14 @@ import type { GameType } from '../engine/types';
 import { GAMES } from '../engine/types';
 import {
   Dices, Spade, SquareStack, Heart,
-  Settings, LogIn, Sun, Moon, LogOut, Flame,
+  Settings, LogIn, Sun, Moon, LogOut, Flame, Trophy,
 } from 'lucide-react';
 
 interface GameSelectorProps {
   onSelectGame: (game: GameType) => void;
   onSettings: () => void;
   onSignIn: () => void;
+  onLeaderboard?: () => void;
 }
 
 const GAME_ICONS: Record<GameType, React.ReactNode> = {
@@ -33,7 +34,7 @@ const GAME_READY: Record<GameType, boolean> = {
   bridge: true,
 };
 
-export function GameSelector({ onSelectGame, onSettings, onSignIn }: GameSelectorProps) {
+export function GameSelector({ onSelectGame, onSettings, onSignIn, onLeaderboard }: GameSelectorProps) {
   const { user, profile, signOut } = useAuthStore();
   const { theme, toggle: toggleTheme } = useTheme();
 
@@ -159,9 +160,12 @@ export function GameSelector({ onSelectGame, onSettings, onSignIn }: GameSelecto
           );
         })}
 
-        {/* Settings + Sign in row */}
+        {/* Settings + Leaderboard + Sign in row */}
         <div style={{ display: 'flex', gap: 10, animation: 'slide-up 0.5s ease-out 0.45s both' }}>
           <SmallCard icon={<Settings size={16} />} label="Settings" onClick={onSettings} />
+          {onLeaderboard && (
+            <SmallCard icon={<Trophy size={16} />} label="Rankings" onClick={onLeaderboard} />
+          )}
           {!user && isSupabaseConfigured() && (
             <SmallCard icon={<LogIn size={16} />} label="Sign In" onClick={onSignIn} />
           )}

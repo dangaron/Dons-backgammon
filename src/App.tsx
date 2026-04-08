@@ -19,11 +19,13 @@ import { useGameStore } from './games/backgammon/store/gameStore';
 import { useAuthStore } from './shared/store/authStore';
 import { isSupabaseConfigured } from './shared/lib/supabase';
 import { getDailyChallenges } from './shared/lib/dailyChallenges';
+import { LeaderboardScreen } from './shared/ui/LeaderboardScreen';
 import type { GameType } from './shared/engine/types';
 
 type AppView =
   | 'game-select'
   | 'settings'
+  | 'leaderboard'
   // Backgammon views
   | 'backgammon-lobby'
   | 'backgammon-play'
@@ -115,7 +117,12 @@ export default function App() {
           onSelectGame={handleSelectGame}
           onSettings={() => setView('settings')}
           onSignIn={() => setShowAuth(true)}
+          onLeaderboard={() => setView('leaderboard')}
         />
+      )}
+
+      {view === 'leaderboard' && (
+        <LeaderboardScreen onBack={() => setView('game-select')} />
       )}
 
       {view === 'backgammon-lobby' && (
@@ -261,6 +268,12 @@ export default function App() {
   );
 }
 
+const VARIANT_OPTIONS = [
+  { key: 'standard' as const, label: '🎲 Standard', desc: '15 checkers — classic rules' },
+  { key: 'nackgammon' as const, label: '⚔️ Nackgammon', desc: '17 checkers — longer games' },
+  { key: 'hypergammon' as const, label: '⚡ Hypergammon', desc: '3 checkers — blitz mode' },
+];
+
 const DIFFICULTIES = [
   { key: 'easy' as const, label: '😊 Easy', desc: 'Learning the ropes' },
   { key: 'medium' as const, label: '🎯 Medium', desc: 'Solid challenge' },
@@ -276,13 +289,48 @@ function NewGameModal({ onStart, onCancel }: {
   const [cubeEnabled, setCubeEnabled] = useState(true);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'expert'>('medium');
   const [tutorEnabled, setTutorEnabled] = useState(false);
+  const [variant, setVariant] = useState<'standard' | 'nackgammon' | 'hypergammon'>('standard');
 
   return (
     <div className="overlay-backdrop" onClick={onCancel}>
-      <div className="overlay-card" onClick={(e) => e.stopPropagation()}>
+      <div className="overlay-card" onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 380 }}>
         <div style={{ fontSize: 28, marginBottom: 4 }}>⚔️</div>
         <h2>New Game</h2>
-        <p>Points needed to win the match</p>
+
+        {/* Variant selector */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 800, color: 'var(--text-muted)',
+            textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8,
+          }}>
+            Game Variant
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {VARIANT_OPTIONS.map((v) => (
+              <button
+                key={v.key}
+                onClick={() => setVariant(v.key)}
+                style={{
+                  padding: '8px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  background: variant === v.key
+                    ? 'linear-gradient(180deg, var(--accent) 0%, #3ab5ad 100%)'
+                    : 'var(--surface-2)',
+                  color: variant === v.key ? 'var(--bg)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font)', fontWeight: 700, fontSize: 13,
+                  textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8,
+                  transition: 'all 0.15s',
+                  boxShadow: variant === v.key ? 'var(--btn-shadow-sm)' : 'none',
+                }}
+              >
+                <span>{v.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.7 }}>{v.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ marginTop: 0 }}>Points needed to win the match</p>
 
         <div className="match-selector">
           {MATCH_LENGTHS.map((n) => (

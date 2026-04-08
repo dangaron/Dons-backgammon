@@ -21,12 +21,12 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export function SolitaireLobby({ onPlay, onBack, onSettings }: SolitaireLobbyProps) {
   const { hasSavedGame, resumeGame, stats } = useSolitaireStore();
 
-  const totalWinRate = stats.gamesPlayed > 0
-    ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
+  const totalWinRate = stats.global.totalGamesPlayed > 0
+    ? Math.round((stats.global.totalGamesWon / stats.global.totalGamesPlayed) * 100)
     : 0;
 
   const handleContinue = () => {
-    resumeGame();
+    resumeGame('klondike');
     onPlay('klondike');
   };
 
@@ -146,14 +146,14 @@ export function SolitaireLobby({ onPlay, onBack, onSettings }: SolitaireLobbyPro
             key={variant.id}
             variant={variant}
             index={i}
-            stats={stats}
+            stats={{ gamesPlayed: stats.global.totalGamesPlayed, gamesWon: stats.global.totalGamesWon }}
             onClick={() => onPlay(variant.id)}
           />
         ))}
       </div>
 
       {/* Overall stats */}
-      {stats.gamesPlayed > 0 && (
+      {stats.global.totalGamesPlayed > 0 && (
         <div style={{
           marginTop: 28, animation: 'slide-up 0.5s ease-out 0.5s both',
         }}>
@@ -164,10 +164,10 @@ export function SolitaireLobby({ onPlay, onBack, onSettings }: SolitaireLobbyPro
             <Trophy size={14} /> Overall Stats
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <StatBadge value={stats.gamesPlayed} label="Played" icon="🃏" />
-            <StatBadge value={stats.gamesWon} label="Won" icon="🏆" />
+            <StatBadge value={stats.global.totalGamesPlayed} label="Played" icon="🃏" />
+            <StatBadge value={stats.global.totalGamesWon} label="Won" icon="🏆" />
             <StatBadge value={totalWinRate} label="Win %" suffix="%" icon="🔥" />
-            <StatBadge value={stats.currentStreak} label="Streak" icon="⚡" />
+            <StatBadge value={stats.global.currentDailyStreak} label="Streak" icon="⚡" />
           </div>
         </div>
       )}

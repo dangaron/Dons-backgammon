@@ -8,7 +8,6 @@ import { SpiderBoard } from './SpiderBoard';
 import { FreeCellBoard } from './FreeCellBoard';
 import { PyramidBoard } from './PyramidBoard';
 import { TriPeaksBoard } from './TriPeaksBoard';
-import { WinAnimation } from './WinAnimation';
 import { AchievementToast } from './AchievementToast';
 
 interface SolitaireRouterProps {
@@ -16,7 +15,7 @@ interface SolitaireRouterProps {
 }
 
 export function SolitaireRouter({ onQuit }: SolitaireRouterProps) {
-  const { activeVariant, newAchievements, dismissAchievement, settings } = useSolitaireStore();
+  const { activeVariant, newAchievements, dismissAchievement } = useSolitaireStore();
 
   const boardProps = { onQuit };
 

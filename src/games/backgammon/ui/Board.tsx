@@ -16,6 +16,7 @@ import { BAR, HOME, OPP_BAR, pipCount, opponentPipCount, unflopBoard } from '../
 import { applySingleDieMove } from '../engine/moves';
 
 import { useTheme } from '../../../shared/lib/useTheme';
+import { loadBoardTheme, BOARD_THEMES } from '../lib/boardThemes';
 
 // ── Dimensions ───────────────────────────────────────────────────────────────
 const BW = 680;
@@ -247,7 +248,10 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
   onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void; onQuit?: () => void;
 } = {}) {
   const { theme, toggle: toggleTheme } = useTheme();
-  const c = THEMES[theme];
+  const boardThemeName = loadBoardTheme();
+  const boardTheme = boardThemeName !== 'modern-dark' ? BOARD_THEMES[boardThemeName] : null;
+  // Use board theme colors if set, otherwise fall back to light/dark theme
+  const c = boardTheme ? boardTheme.colors : THEMES[theme];
   const {
     gameState, selectedPoint, legalDestinations, selectPoint, clearSelection,
     rollDiceAction, offerDoubleAction, acceptDoubleAction, rejectDoubleAction,

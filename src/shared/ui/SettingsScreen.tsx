@@ -9,8 +9,10 @@ import { supabase } from '../lib/supabase';
 import { isPushSupported, subscribeToPush, isPushSubscribed, unsubscribeFromPush } from '../lib/pushNotifications';
 import {
   ArrowLeft, Camera, Sun, Moon, Bell, BellOff,
-  UserPlus, LogOut, Check, X, Search,
+  UserPlus, LogOut, Check, X, Search, Volume2, VolumeX,
 } from 'lucide-react';
+import { isSoundEnabled, setSoundEnabled, getSoundVolume, setSoundVolume, playSound } from '../lib/sounds';
+import { BOARD_THEMES, loadBoardTheme, saveBoardTheme, type BoardThemeName } from '../../games/backgammon/lib/boardThemes';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -33,6 +35,9 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [friendSearch, setFriendSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ id: string; username: string; display_name: string | null; avatar_url: string | null }>>([]);
   const [searching, setSearching] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [volume, setVolume] = useState(getSoundVolume());
+  const [boardTheme, setBoardTheme] = useState<BoardThemeName>(loadBoardTheme());
 
   useEffect(() => {
     isPushSubscribed().then(setPushEnabled);
@@ -245,6 +250,71 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
               active={theme === 'dark'}
               onClick={() => { if (theme !== 'dark') toggleTheme(); }}
             />
+          </div>
+        </Section>
+
+        {/* ── Sound ── */}
+        <Section title="Sound">
+          <ToggleRow
+            icon={soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            label="Sound Effects"
+            description="Dice rolls, checker sounds, win/loss"
+            enabled={soundOn}
+            onToggle={() => {
+              const next = !soundOn;
+              setSoundOn(next);
+              setSoundEnabled(next);
+              if (next) playSound('checkerPlace');
+            }}
+          />
+          {soundOn && (
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', width: 50 }}>Volume</span>
+              <input
+                type="range" min={0} max={100} value={Math.round(volume * 100)}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value) / 100;
+                  setVolume(v);
+                  setSoundVolume(v);
+                }}
+                onMouseUp={() => playSound('diceRoll')}
+                onTouchEnd={() => playSound('diceRoll')}
+                style={{ flex: 1, accentColor: 'var(--accent)' }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 30, textAlign: 'right' }}>
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          )}
+        </Section>
+
+        {/* ── Board Theme ── */}
+        <Section title="Board Theme">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {Object.values(BOARD_THEMES).map((t) => (
+              <button
+                key={t.name}
+                onClick={() => { setBoardTheme(t.name); saveBoardTheme(t.name); }}
+                style={{
+                  padding: 10, borderRadius: 12, cursor: 'pointer',
+                  border: `2px solid ${boardTheme === t.name ? 'var(--accent)' : 'var(--glass-border)'}`,
+                  background: boardTheme === t.name ? 'var(--accent)18' : 'transparent',
+                  fontFamily: 'var(--font)', textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <div style={{
+                  width: '100%', height: 32, borderRadius: 6, marginBottom: 6,
+                  background: t.preview,
+                }} />
+                <div style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: boardTheme === t.name ? 'var(--accent)' : 'var(--text)',
+                }}>
+                  {t.label}
+                </div>
+              </button>
+            ))}
           </div>
         </Section>
 

@@ -179,8 +179,6 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
   const handleWasteClick = useCallback(() => {
     if (state.gameOver || state.waste.length === 0) return;
 
-    const wasteTop = state.waste[state.waste.length - 1];
-
     // King on waste top auto-remove is not a thing in pyramid; waste kings just sit there.
     // If we have a pyramid card selected, try to pair with waste
     if (selected !== null) {
