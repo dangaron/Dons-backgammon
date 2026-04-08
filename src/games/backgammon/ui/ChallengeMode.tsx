@@ -3,7 +3,7 @@
  * Uses the same board aesthetic as the main game.
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { CHALLENGES } from '../engine/challenges';
 import type { Challenge } from '../engine/challenges';
 import { chooseBestMove } from '../engine/ai';
@@ -11,6 +11,7 @@ import { boardKey, BAR, OPP_BAR } from '../engine/board';
 import { getValidSingleMoves, applySingleDieMove, hasLegalMoves } from '../engine/moves';
 import type { DieMove } from '../engine/types';
 import { recordChallengeResult } from '../../../shared/lib/dailyChallenges';
+import { useTheme } from '../../../shared/lib/useTheme';
 
 // ── Reuse main board dimensions & geometry ───────────────────────────────────
 const BW = 680;
@@ -41,8 +42,7 @@ function checkerCY(idx: number, n: number): number {
 }
 
 // ── Theme colors (reads from document attribute set by main Board) ───────────
-function getThemeColors() {
-  const theme = document.documentElement.getAttribute('data-theme');
+function getThemeColors(theme: 'light' | 'dark') {
   const isDark = theme === 'dark';
   return isDark ? {
     boardBg: '#13151e', frameBg: '#0e1018', barBg: '#0c0e16',
@@ -87,6 +87,7 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
   challengeId?: string;
   basePoints?: number;
 }) {
+  const { theme } = useTheme();
   // If a specific challenge is requested, find it
   const specificIdx = challengeId ? CHALLENGES.findIndex(c => c.id === challengeId) : -1;
   const [currentIdx, setCurrentIdx] = useState(specificIdx >= 0 ? specificIdx : 0);
@@ -102,24 +103,27 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
     try {
       const saved = localStorage.getItem('bg-solved-challenges');
       return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch { return new Set(); }
+    } catch (error) {
+      console.warn('Failed to load solved challenges:', error);
+      return new Set();
+    }
   });
 
-  const c = useMemo(getThemeColors, []);
+  const c = useMemo(() => getThemeColors(theme), [theme]);
 
   const filtered = CHALLENGES.filter(
     (ch) => filter === 'all' || ch.difficulty === filter
   );
   const challenge: Challenge | undefined = filtered[currentIdx];
 
-  useEffect(() => {
+  const resetChallengeState = () => {
     setResult(null);
     setSelected(null);
     setDests([]);
     setChallengeBoard(null);
     setChallengeDice([]);
     setAccumulatedMoves([]);
-  }, [currentIdx, filter]);
+  };
 
   const checkFinalResult = useCallback((finalBoard: number[], ch: Challenge) => {
     const { move: aiMove } = chooseBestMove(ch.board, ch.dice, 100);
@@ -135,7 +139,11 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
       const newSolved = new Set(solvedIds);
       newSolved.add(ch.id);
       setSolvedIds(newSolved);
-      try { localStorage.setItem('bg-solved-challenges', JSON.stringify([...newSolved])); } catch {}
+      try {
+        localStorage.setItem('bg-solved-challenges', JSON.stringify([...newSolved]));
+      } catch (error) {
+        console.warn('Failed to save solved challenges:', error);
+      }
     }
   }, [solvedIds, basePoints]);
 
@@ -225,7 +233,11 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
             <button
               key={f}
               className={`action-btn ${filter === f ? 'primary' : 'secondary'}`}
-              onClick={() => { setFilter(f); setCurrentIdx(0); }}
+              onClick={() => {
+                resetChallengeState();
+                setFilter(f);
+                setCurrentIdx(0);
+              }}
               style={{ fontSize: 10, height: 26, padding: '0 8px', textTransform: 'capitalize' }}
             >
               {f}
@@ -425,9 +437,12 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
         <div style={{ flex: 1 }} />
 
         {/* Navigation */}
-        <button className="action-btn secondary icon-only" style={{ width: 32, height: 32 }}
+          <button className="action-btn secondary icon-only" style={{ width: 32, height: 32 }}
           disabled={currentIdx === 0}
-          onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}>
+          onClick={() => {
+            resetChallengeState();
+            setCurrentIdx(Math.max(0, currentIdx - 1));
+          }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -439,7 +454,10 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
 
         <button className="action-btn secondary icon-only" style={{ width: 32, height: 32 }}
           disabled={currentIdx >= filtered.length - 1}
-          onClick={() => setCurrentIdx(Math.min(filtered.length - 1, currentIdx + 1))}>
+          onClick={() => {
+            resetChallengeState();
+            setCurrentIdx(Math.min(filtered.length - 1, currentIdx + 1));
+          }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -447,7 +465,10 @@ export function ChallengeMode({ onBack, challengeId, basePoints }: {
 
         {result === 'correct' && (
           <button className="action-btn primary" style={{ fontSize: 12, height: 32, marginLeft: 4 }}
-            onClick={() => setCurrentIdx(Math.min(filtered.length - 1, currentIdx + 1))}>
+            onClick={() => {
+              resetChallengeState();
+              setCurrentIdx(Math.min(filtered.length - 1, currentIdx + 1));
+            }}>
             Next
           </button>
         )}

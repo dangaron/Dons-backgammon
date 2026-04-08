@@ -244,7 +244,7 @@ interface DragState {
 }
 
 // ── Main Board Component ─────────────────────────────────────────────────────
-export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit }: {
+export function Board({ onChallenges, onNewGame, onDashboard, onQuit }: {
   onChallenges?: () => void; onNewGame?: () => void; onDashboard?: () => void; onQuit?: () => void;
 } = {}) {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -270,7 +270,10 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
     return unflopBoard(board);
   }, [board, currentPlayer]);
 
-  const destMap = new Map(legalDestinations.map((d) => [d.to, d]));
+  const destMap = useMemo(
+    () => new Map(legalDestinations.map((d) => [d.to, d])),
+    [legalDestinations],
+  );
 
   // Compute blocked destinations — points where a die WOULD land but opponent has 2+ checkers
   const blockedDests = useMemo(() => {
@@ -365,7 +368,7 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
     setDragPos({ x, y });
   }, [drag, svgPoint]);
 
-  const handleDragEnd = useCallback((_e: React.PointerEvent) => {
+  const handleDragEnd = useCallback(() => {
     if (!drag || !dragPos) {
       setDrag(null);
       setDragPos(null);
@@ -550,6 +553,12 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
               </button>
             );
           })()}
+
+          {onNewGame && (
+            <button className="action-btn secondary" onClick={onNewGame}>
+              New
+            </button>
+          )}
 
           {/* Double button — only during roll phase */}
           {turnPhase === 'roll' && currentPlayer === 0 && doublingCube.owner !== 1 && (
@@ -940,7 +949,14 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
                     fontSize={14} fill="rgba(255,255,255,0.5)" style={{ fontFamily: 'var(--font)' }}>
                     {winner === 0 ? 'You outplayed the AI' : 'Better luck next time'}
                   </text>
-                  <g onClick={(e) => { e.stopPropagation(); startNewGame(); }} style={{ cursor: 'pointer' }}>
+                  <g
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onNewGame) onNewGame();
+                      else startNewGame();
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <rect x={BW / 2 - 70} y={BH / 2 + 30} width={140} height={44}
                       rx={22} fill={c.player} />
                     <text x={BW / 2} y={BH / 2 + 57} textAnchor="middle"

@@ -97,13 +97,19 @@ export function loadDailyProgress(): DailyProgress {
       const data = JSON.parse(raw) as DailyProgress;
       if (data.date === key) return data;
     }
-  } catch {}
+  } catch (error) {
+    console.warn('Failed to load daily challenge progress:', error);
+  }
   return { date: key, scores: {}, totalScore: 0, completed: false };
 }
 
 /** Save progress to localStorage */
 export function saveDailyProgress(progress: DailyProgress): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  } catch (error) {
+    console.warn('Failed to save daily challenge progress:', error);
+  }
 }
 
 /** Record a challenge result */

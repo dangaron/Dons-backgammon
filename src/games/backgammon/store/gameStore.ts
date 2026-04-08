@@ -20,6 +20,8 @@ import { getLegalMoves, getValidSingleMoves, applySingleDieMove, hasLegalMoves }
 import { BAR, HOME, flipBoard } from '../engine/board';
 import { Mulberry32, generateSeed } from '../../../prng/mulberry32';
 import type { AIDifficulty } from '../engine/ai';
+import type { VariantType } from '../engine/variants';
+import { hasWonVariant } from '../engine/variants';
 import type { AIRequest, AIResponse } from '../workers/ai.worker';
 import { playSound } from '../../../shared/lib/sounds';
 import type { MoveRecord } from '../engine/analysis';
@@ -80,7 +82,7 @@ interface GameStore {
   tutorWarning: { message: string; error: number; aiMove: import('../engine/types').Move | null } | null;
 
   // Actions
-  startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean) => void;
+  startNewGame: (mode?: GameMode, matchLength?: number, cubeEnabled?: boolean, variant?: VariantType) => void;
   setAIDifficulty: (difficulty: AIDifficulty) => void;
   requestHint: () => void;
   clearHint: () => void;
@@ -202,9 +204,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   clearHint: () => set({ hintMove: null, hintScore: null, showingHint: false }),
 
-  startNewGame: (mode = 'vs-ai', matchLength = 1, cubeEnabled = true) => {
+  startNewGame: (mode = 'vs-ai', matchLength = 1, cubeEnabled = true, variant = 'standard') => {
     const seed = generateSeed();
-    const newState = createInitialGameState(matchLength);
+    const newState = createInitialGameState(matchLength, variant);
     if (!cubeEnabled) {
       // Disable doubling by setting owner to a dummy value that blocks both players
       newState.doublingCube = { value: 1, owner: 0, offeredBy: null };
@@ -400,7 +402,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     playSound(wasHit ? 'checkerHit' : 'checkerPlace');
 
     // Check for win
-    if (newBoard[HOME] >= 15) {
+    if (hasWonVariant(newBoard, gameState.variant ?? 'standard')) {
       const cubeValue = gameState.doublingCube.value;
       const newMatchScore: [number, number] = [...gameState.matchScore];
       newMatchScore[gameState.currentPlayer] += cubeValue;

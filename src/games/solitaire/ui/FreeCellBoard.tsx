@@ -29,30 +29,29 @@ interface FreeCellBoardProps {
 
 export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
   const { freecellState, makeMove, undo, undoStack, requestHint, hintMove, clearHint } = useSolitaireStore();
+  const gs = freecellState;
   const [selected, setSelected] = useState<{
     source: 'tableau' | 'freecell';
     index: number;        // column or free cell index
     cardIndex?: number;   // index within tableau column (for multi-card selection)
   } | null>(null);
 
-  // Guard: if no state, render nothing
-  if (!freecellState) return null;
-  const gs = freecellState;
-
-  const legalMoves = useMemo(() => getFreeCellLegalMoves(gs), [gs]);
+  const legalMoves = useMemo(() => (gs ? getFreeCellLegalMoves(gs) : []), [gs]);
 
   // Clear hint on state change
-  useEffect(() => { clearHint(); }, [gs, clearHint]);
+  useEffect(() => {
+    if (gs) clearHint();
+  }, [gs, clearHint]);
 
   // Elapsed time
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (gs.gameOver) return;
+    if (!gs || gs.gameOver) return;
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - gs.startTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [gs.startTime, gs.gameOver]);
+  }, [gs]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -62,6 +61,7 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
 
   // Dynamic SVG height
   const maxTableauCards = useMemo(() => {
+    if (!gs) return CARD_H;
     return Math.max(...gs.tableau.map(col => col.length * FACE_UP_OFFSET), CARD_H);
   }, [gs]);
 
@@ -95,9 +95,9 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
   }, [legalMoves]);
 
   const handleTableauCardClick = useCallback((col: number, cardIndex: number) => {
-    if (gs.gameOver) return;
+    if (gs!.gameOver) return;
 
-    const count = gs.tableau[col].length - cardIndex;
+    const count = gs!.tableau[col].length - cardIndex;
 
     // Clicking same selection: deselect
     if (selected && selected.source === 'tableau' && selected.index === col && selected.cardIndex === cardIndex) {
@@ -110,7 +110,7 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       let targetMove: FreeCellMove | undefined;
 
       if (selected.source === 'tableau') {
-        const selectedCount = gs.tableau[selected.index].length - (selected.cardIndex ?? gs.tableau[selected.index].length - 1);
+        const selectedCount = gs!.tableau[selected.index].length - (selected.cardIndex ?? gs!.tableau[selected.index].length - 1);
         const possibleMoves = findMovesForSelection('tableau', selected.index, selectedCount);
         targetMove = possibleMoves.find(m =>
           m.type === 'tableau-to-tableau' && m.to === col
@@ -136,10 +136,10 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
     } else {
       setSelected(null);
     }
-  }, [selected, gs.gameOver, gs.tableau, findMovesForSelection, makeMove]);
+  }, [selected, gs, findMovesForSelection, makeMove]);
 
   const handleTableauDoubleClick = useCallback((col: number) => {
-    if (gs.gameOver) return;
+    if (gs!.gameOver) return;
 
     // Auto-move top card to foundation
     const move = legalMoves.find(m =>
@@ -149,15 +149,15 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       makeMove(move);
       setSelected(null);
     }
-  }, [gs.gameOver, legalMoves, makeMove]);
+  }, [gs, legalMoves, makeMove]);
 
   const handleEmptyColumnClick = useCallback((col: number) => {
-    if (gs.gameOver || !selected) return;
+    if (gs!.gameOver || !selected) return;
 
     let targetMove: FreeCellMove | undefined;
 
     if (selected.source === 'tableau') {
-      const selectedCount = gs.tableau[selected.index].length - (selected.cardIndex ?? gs.tableau[selected.index].length - 1);
+      const selectedCount = gs!.tableau[selected.index].length - (selected.cardIndex ?? gs!.tableau[selected.index].length - 1);
       const possibleMoves = findMovesForSelection('tableau', selected.index, selectedCount);
       targetMove = possibleMoves.find(m =>
         m.type === 'tableau-to-tableau' && m.to === col
@@ -173,12 +173,12 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       makeMove(targetMove);
       setSelected(null);
     }
-  }, [gs.gameOver, gs.tableau, selected, findMovesForSelection, makeMove]);
+  }, [gs, selected, findMovesForSelection, makeMove]);
 
   const handleFreeCellClick = useCallback((cellIndex: number) => {
-    if (gs.gameOver) return;
+    if (gs!.gameOver) return;
 
-    const card = gs.freeCells[cellIndex];
+    const card = gs!.freeCells[cellIndex];
 
     // If clicking an occupied free cell
     if (card !== null) {
@@ -214,10 +214,10 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
         setSelected(null);
       }
     }
-  }, [gs.gameOver, gs.freeCells, selected, findMovesForSelection, legalMoves, makeMove]);
+  }, [gs, selected, findMovesForSelection, legalMoves, makeMove]);
 
   const handleFreeCellDoubleClick = useCallback((cellIndex: number) => {
-    if (gs.gameOver) return;
+    if (gs!.gameOver) return;
 
     const move = legalMoves.find(m =>
       m.type === 'freecell-to-foundation' && m.from === cellIndex
@@ -226,10 +226,10 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       makeMove(move);
       setSelected(null);
     }
-  }, [gs.gameOver, legalMoves, makeMove]);
+  }, [gs, legalMoves, makeMove]);
 
   const handleFoundationClick = useCallback((foundationIndex: number) => {
-    if (gs.gameOver || !selected) return;
+    if (gs!.gameOver || !selected) return;
 
     let targetMove: FreeCellMove | undefined;
 
@@ -255,7 +255,7 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       makeMove(targetMove);
       setSelected(null);
     }
-  }, [gs.gameOver, selected, findMovesForSelection, legalMoves, makeMove]);
+  }, [gs, selected, findMovesForSelection, legalMoves, makeMove]);
 
   // ── Destinations for highlighting ─────────────────────────────────────────────
 
@@ -264,7 +264,7 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
 
     let count: number | undefined;
     if (selected.source === 'tableau' && selected.cardIndex !== undefined) {
-      count = gs.tableau[selected.index].length - selected.cardIndex;
+      count = gs!.tableau[selected.index].length - selected.cardIndex;
     }
 
     const moves = findMovesForSelection(selected.source, selected.index, count);
@@ -282,7 +282,7 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
       }
     }
     return dests;
-  }, [selected, gs.tableau, findMovesForSelection]);
+  }, [selected, gs, findMovesForSelection]);
 
   // ── Hint highlighting ─────────────────────────────────────────────────────────
 
@@ -301,6 +301,8 @@ export function FreeCellBoard({ onQuit }: FreeCellBoardProps) {
         return null;
     }
   }, [hintMove]);
+
+  if (!gs) return null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@
  * Settings screen — profile, avatar, theme, friends, notifications.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../lib/useTheme';
 import { supabase } from '../lib/supabase';
@@ -18,12 +18,19 @@ interface SettingsScreenProps {
   onBack: () => void;
 }
 
+type FriendProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const { user, profile, signOut, updateProfile, fetchProfile } = useAuthStore();
   const { theme, toggle: toggleTheme } = useTheme();
 
-  const [username, setUsername] = useState(profile?.username || '');
-  const [displayName, setDisplayName] = useState(profile?.display_name || '');
+  const [draftUsername, setDraftUsername] = useState<string | null>(null);
+  const [draftDisplayName, setDraftDisplayName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -31,32 +38,39 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Friends state
-  const [friends, setFriends] = useState<Array<{ id: string; username: string; display_name: string | null; avatar_url: string | null }>>([]);
+  const [friendsVersion, setFriendsVersion] = useState(0);
   const [friendSearch, setFriendSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; username: string; display_name: string | null; avatar_url: string | null }>>([]);
+  const [searchResults, setSearchResults] = useState<FriendProfile[]>([]);
   const [searching, setSearching] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [volume, setVolume] = useState(getSoundVolume());
   const [boardTheme, setBoardTheme] = useState<BoardThemeName>(loadBoardTheme());
-
-  useEffect(() => {
-    isPushSubscribed().then(setPushEnabled);
-    if (user) loadFriends();
-  }, [user]);
-
-  const loadFriends = async () => {
-    if (!user) return;
-    // Load friends from localStorage for now (Supabase friends table would be Phase 3)
+  const username = draftUsername ?? profile?.username ?? '';
+  const displayName = draftDisplayName ?? profile?.display_name ?? '';
+  const friends = useMemo(() => {
+    void friendsVersion;
+    if (!user) return [];
     try {
       const raw = localStorage.getItem(`bg-friends-${user.id}`);
-      if (raw) setFriends(JSON.parse(raw));
-    } catch {}
-  };
+      return raw ? (JSON.parse(raw) as FriendProfile[]) : [];
+    } catch (error) {
+      console.warn('Failed to load friends:', error);
+      return [];
+    }
+  }, [user, friendsVersion]);
+
+  useEffect(() => {
+    void isPushSubscribed().then(setPushEnabled);
+  }, []);
 
   const saveFriends = (list: typeof friends) => {
     if (!user) return;
-    setFriends(list);
-    try { localStorage.setItem(`bg-friends-${user.id}`, JSON.stringify(list)); } catch {}
+    try {
+      localStorage.setItem(`bg-friends-${user.id}`, JSON.stringify(list));
+      setFriendsVersion((version) => version + 1);
+    } catch (error) {
+      console.warn('Failed to save friends:', error);
+    }
   };
 
   const handleSave = async () => {
@@ -65,6 +79,8 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       username: username.trim() || undefined,
       display_name: displayName.trim() || undefined,
     });
+    setDraftUsername(null);
+    setDraftDisplayName(null);
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -132,7 +148,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
     setSearching(false);
   };
 
-  const addFriend = (friend: typeof friends[0]) => {
+  const addFriend = (friend: FriendProfile) => {
     if (friends.some(f => f.id === friend.id)) return;
     saveFriends([...friends, friend]);
     setSearchResults([]);
@@ -220,13 +236,13 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           {/* Username */}
           <FieldLabel label="Username">
             <input className="auth-input" value={username}
-              onChange={(e) => setUsername(e.target.value)} />
+              onChange={(e) => setDraftUsername(e.target.value)} />
           </FieldLabel>
 
           {/* Display name */}
           <FieldLabel label="Display Name">
             <input className="auth-input" value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)} />
+              onChange={(e) => setDraftDisplayName(e.target.value)} />
           </FieldLabel>
 
           <button className="action-btn primary" onClick={handleSave}
@@ -495,7 +511,7 @@ function ToggleRow({ icon, label, description, enabled, onToggle }: {
 }
 
 function FriendRow({ profile, action }: {
-  profile: { id: string; username: string; display_name: string | null; avatar_url: string | null };
+  profile: FriendProfile;
   action: React.ReactNode;
 }) {
   const initials = (profile.display_name || profile.username)[0].toUpperCase();

@@ -14,9 +14,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Using untyped client to avoid strict generic mismatches.
+// Using the default client type to avoid strict generic mismatches.
 // For production, generate types with: npx supabase gen types typescript --linked
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder',

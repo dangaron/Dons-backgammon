@@ -45,7 +45,7 @@ export function analyzeGame(
         playerMove: move,
         bestMove: best,
         wasOptimal: false,
-        explanation: getMoveExplanation(move, best, state),
+        explanation: getMoveExplanation(move, best),
       });
     }
   }
@@ -83,7 +83,6 @@ function movesEqual(a: SolitaireMove, b: SolitaireMove): boolean {
 function getMoveExplanation(
   playerMove: SolitaireMove,
   bestMove: SolitaireMove | null,
-  _state: SolitaireState,
 ): string {
   if (!bestMove) return 'No better move available.';
 

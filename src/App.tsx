@@ -25,6 +25,7 @@ import { isSupabaseConfigured } from './shared/lib/supabase';
 import { getDailyChallenges } from './shared/lib/dailyChallenges';
 import { LeaderboardScreen } from './shared/ui/LeaderboardScreen';
 import type { GameType } from './shared/engine/types';
+import type { VariantType } from './games/backgammon/engine/variants';
 
 type AppView =
   | 'game-select'
@@ -101,10 +102,16 @@ export default function App() {
     setShowNewGame(true);
   };
 
-  const handleStartGame = (matchLength: number, cubeEnabled: boolean, difficulty?: 'easy' | 'medium' | 'hard' | 'expert', tutorEnabled?: boolean) => {
+  const handleStartGame = (
+    matchLength: number,
+    cubeEnabled: boolean,
+    difficulty?: 'easy' | 'medium' | 'hard' | 'expert',
+    tutorEnabled?: boolean,
+    variant: VariantType = 'standard',
+  ) => {
     if (difficulty) useGameStore.getState().setAIDifficulty(difficulty);
     useGameStore.getState().setTutorMode(tutorEnabled ?? false);
-    startNewGame('vs-ai', matchLength, cubeEnabled);
+    startNewGame('vs-ai', matchLength, cubeEnabled, variant);
     setShowNewGame(false);
     setView('backgammon-play');
   };
@@ -309,7 +316,13 @@ const DIFFICULTIES = [
 ];
 
 function NewGameModal({ onStart, onCancel }: {
-  onStart: (matchLength: number, cubeEnabled: boolean, difficulty: 'easy' | 'medium' | 'hard' | 'expert', tutorEnabled: boolean) => void;
+  onStart: (
+    matchLength: number,
+    cubeEnabled: boolean,
+    difficulty: 'easy' | 'medium' | 'hard' | 'expert',
+    tutorEnabled: boolean,
+    variant: VariantType,
+  ) => void;
   onCancel: () => void;
 }) {
   const [matchLength, setMatchLength] = useState(1);
@@ -468,7 +481,7 @@ function NewGameModal({ onStart, onCancel }: {
         </div>
 
         <button className="action-btn primary" style={{ width: '100%' }}
-          onClick={() => onStart(matchLength, cubeEnabled, difficulty, tutorEnabled)}>
+          onClick={() => onStart(matchLength, cubeEnabled, difficulty, tutorEnabled, variant)}>
           🚀 Start Game
         </button>
       </div>

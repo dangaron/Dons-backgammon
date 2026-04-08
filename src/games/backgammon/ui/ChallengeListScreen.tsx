@@ -57,12 +57,12 @@ function useAnimatedNumber(target: number, duration = 600) {
 
 function ConfettiBurst({ active }: { active: boolean }) {
   if (!active) return null;
+  const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#FF9F43', '#A78BFA'];
   const particles = Array.from({ length: 8 }, (_, i) => {
     const angle = (i / 8) * 360;
-    const dist = 18 + Math.random() * 10;
+    const dist = 18 + (i % 3) * 4;
     const dx = Math.cos((angle * Math.PI) / 180) * dist;
     const dy = Math.sin((angle * Math.PI) / 180) * dist;
-    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#FF9F43', '#A78BFA'];
     return (
       <div
         key={i}
@@ -123,8 +123,6 @@ export function ChallengeListScreen({ onBack, onPlayChallenge }: ChallengeListSc
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
-
-  useEffect(() => setProgress(loadDailyProgress()), []);
 
   const solvedCount = Object.values(progress.scores).filter(s => s.solved).length;
   const winPercent = Math.min(100, Math.round((progress.totalScore / WIN_SCORE) * 100));
@@ -337,18 +335,7 @@ function ChallengeCard({
   onClick: () => void;
 }) {
   const diff = DIFF_CONFIG[difficulty];
-  const [showConfetti, setShowConfetti] = useState(false);
-  const prevSolved = useRef(solved);
-
-  // Trigger confetti when a card becomes solved
-  useEffect(() => {
-    if (solved && !prevSolved.current) {
-      setShowConfetti(true);
-      const t = setTimeout(() => setShowConfetti(false), 700);
-      return () => clearTimeout(t);
-    }
-    prevSolved.current = solved;
-  }, [solved]);
+  const showConfetti = solved;
 
   return (
     <button

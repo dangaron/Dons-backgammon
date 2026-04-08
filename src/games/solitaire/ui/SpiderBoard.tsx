@@ -26,26 +26,25 @@ interface SpiderBoardProps {
 
 export function SpiderBoard({ onQuit }: SpiderBoardProps) {
   const { spiderState, makeMove, undo, undoStack, requestHint, hintMove, clearHint } = useSolitaireStore();
+  const gs = spiderState;
   const [selected, setSelected] = useState<{ col: number; cardIndex: number } | null>(null);
 
-  // Guard: if no state, render nothing
-  if (!spiderState) return null;
-  const gs = spiderState;
-
-  const legalMoves = useMemo(() => getSpiderLegalMoves(gs), [gs]);
+  const legalMoves = useMemo(() => (gs ? getSpiderLegalMoves(gs) : []), [gs]);
 
   // Clear hint on state change
-  useEffect(() => { clearHint(); }, [gs, clearHint]);
+  useEffect(() => {
+    if (gs) clearHint();
+  }, [gs, clearHint]);
 
   // Elapsed time
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (gs.gameOver) return;
+    if (!gs || gs.gameOver) return;
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - gs.startTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [gs.startTime, gs.gameOver]);
+  }, [gs]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -55,6 +54,7 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
 
   // Dynamic SVG height
   const maxTableauCards = useMemo(() => {
+    if (!gs) return CARD_H;
     return Math.max(...gs.tableau.map(p =>
       p.faceDown.length * FACE_DOWN_OFFSET + p.faceUp.length * FACE_UP_OFFSET
     ), CARD_H);
@@ -63,11 +63,11 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
   const boardH = TABLEAU_Y + maxTableauCards + CARD_H + PADDING;
 
   // Stock pile info
-  const stockDealsRemaining = Math.ceil(gs.stock.length / 10);
-  const allColumnsNonEmpty = gs.tableau.every(
+  const stockDealsRemaining = Math.ceil((gs?.stock.length ?? 0) / 10);
+  const allColumnsNonEmpty = gs?.tableau.every(
     pile => pile.faceUp.length > 0 || pile.faceDown.length > 0
-  );
-  const canDealStock = gs.stock.length > 0 && allColumnsNonEmpty;
+  ) ?? false;
+  const canDealStock = (gs?.stock.length ?? 0) > 0 && allColumnsNonEmpty;
 
   // ── Pile x positions ──────────────────────────────────────────────────────────
   const pileX = (i: number) => PADDING + i * (CARD_W + GAP);
@@ -80,7 +80,7 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
    * `faceUpIdx` is the index within `pile.faceUp`.
    */
   const getRunCountFromIndex = useCallback((col: number, faceUpIdx: number): number => {
-    const pile = gs.tableau[col];
+    const pile = gs!.tableau[col];
     // count = number of cards from faceUpIdx to end of faceUp
     return pile.faceUp.length - faceUpIdx;
   }, [gs]);
@@ -93,7 +93,7 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
   }, [legalMoves]);
 
   const handleCardClick = useCallback((col: number, faceUpIdx: number) => {
-    if (gs.gameOver) return;
+    if (gs!.gameOver) return;
 
     const count = getRunCountFromIndex(col, faceUpIdx);
 
@@ -124,10 +124,10 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
     } else {
       setSelected(null);
     }
-  }, [selected, gs.gameOver, getRunCountFromIndex, findMovesForSelection, makeMove]);
+  }, [selected, gs, getRunCountFromIndex, findMovesForSelection, makeMove]);
 
   const handleEmptyColumnClick = useCallback((col: number) => {
-    if (gs.gameOver || !selected) return;
+    if (gs!.gameOver || !selected) return;
 
     const selectedCount = getRunCountFromIndex(selected.col, selected.cardIndex);
     const possibleMoves = findMovesForSelection(selected.col, selectedCount);
@@ -137,13 +137,13 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
       makeMove(targetMove);
       setSelected(null);
     }
-  }, [gs.gameOver, selected, getRunCountFromIndex, findMovesForSelection, makeMove]);
+  }, [gs, selected, getRunCountFromIndex, findMovesForSelection, makeMove]);
 
   const handleStockClick = useCallback(() => {
-    if (gs.gameOver || !canDealStock) return;
+    if (gs!.gameOver || !canDealStock) return;
     setSelected(null);
     makeMove({ type: 'deal-stock' } as SpiderMove);
-  }, [gs.gameOver, canDealStock, makeMove]);
+  }, [gs, canDealStock, makeMove]);
 
   // ── Destinations for highlighting ─────────────────────────────────────────────
 
@@ -171,6 +171,8 @@ export function SpiderBoard({ onQuit }: SpiderBoardProps) {
     if (h.type === 'deal-stock') return { stock: true };
     return null;
   }, [hintMove]);
+
+  if (!gs) return null;
 
   // ── Render ────────────────────────────────────────────────────────────────────
 

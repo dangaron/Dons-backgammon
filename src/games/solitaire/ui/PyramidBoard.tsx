@@ -80,30 +80,26 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
     clearHint,
     gameStartTime,
   } = useSolitaireStore();
+  const state = pyramidState;
 
   const [selected, setSelected] = useState<number | null>(null);
 
-  // If no state, show nothing
-  if (!pyramidState) return null;
-
-  const state = pyramidState;
-  const legalMoves = useMemo(() => getPyramidLegalMoves(state), [state]);
+  const legalMoves = useMemo(() => (state ? getPyramidLegalMoves(state) : []), [state]);
 
   // Clear hint on state change
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => { clearHint(); setSelected(null); }, [state, clearHint]);
+  useEffect(() => {
+    if (state) clearHint();
+  }, [state, clearHint]);
 
   // Elapsed time display
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [elapsed, setElapsed] = useState(0);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (state.gameOver) return;
+    if (!state || state.gameOver) return;
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - gameStartTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [gameStartTime, state.gameOver]);
+  }, [gameStartTime, state]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -113,8 +109,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
 
   // Count remaining pyramid cards
   const remainingCards = useMemo(
-    () => state.removed.filter(r => !r).length,
-    [state.removed],
+    () => (state ? state.removed.filter(r => !r).length : 0),
+    [state],
   );
 
   // ── Hint highlight ────────────────────────────────────────────────────────
@@ -133,8 +129,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
 
   // ── Click handlers ────────────────────────────────────────────────────────
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handlePyramidCardClick = useCallback((index: number) => {
+    if (!state) return;
     if (state.gameOver) return;
     if (!isExposed(index, state.removed)) return;
 
@@ -175,8 +171,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
     }
   }, [state, selected, legalMoves, makeMove]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handleWasteClick = useCallback(() => {
+    if (!state) return;
     if (state.gameOver || state.waste.length === 0) return;
 
     // King on waste top auto-remove is not a thing in pyramid; waste kings just sit there.
@@ -206,8 +202,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
   }, [state, selected, legalMoves, makeMove]);
 
   // Handle clicking a pyramid card when waste is selected
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handlePyramidCardClickWithWaste = useCallback((index: number) => {
+    if (!state) return;
     if (state.gameOver) return;
     if (!isExposed(index, state.removed)) return;
 
@@ -241,8 +237,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
     handlePyramidCardClick(index);
   }, [state, selected, legalMoves, makeMove, handlePyramidCardClick]);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const handleStockClick = useCallback(() => {
+    if (!state) return;
     if (state.gameOver) return;
     setSelected(null);
     if (state.stock.length > 0) {
@@ -254,6 +250,8 @@ export function PyramidBoard({ onQuit }: PyramidBoardProps) {
 
   const stockX = CENTER_X - CARD_W - 10;
   const wasteX = CENTER_X + 10;
+
+  if (!state) return null;
 
   return (
     <div style={{

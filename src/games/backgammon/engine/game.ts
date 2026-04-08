@@ -4,12 +4,15 @@
 import type { GameState, Move, Player } from './types';
 import { INITIAL_BOARD, HOME, cloneBoard, flipBoard, hasWon } from './board';
 import { applyMove, hasLegalMoves } from './moves';
+import type { VariantType } from './variants';
+import { VARIANTS, hasWonVariant } from './variants';
 
-export function createInitialGameState(matchLength = 1): GameState {
-  const board = cloneBoard(INITIAL_BOARD);
+export function createInitialGameState(matchLength = 1, variant: VariantType = 'standard'): GameState {
+  const board = cloneBoard(VARIANTS[variant]?.initialBoard ?? INITIAL_BOARD);
   board[HOME] = 0; // player 0 starts with 0 borne off
   return {
     board,
+    variant,
     currentPlayer: 0,
     dice: [],
     diceRolled: false,
@@ -41,7 +44,7 @@ export function applyMoveToState(state: GameState, move: Move): GameState {
   // borneOff persists in state.borneOff across turns
 
   // Check for win
-  if (hasWon(newBoard)) {
+  if (hasWonVariant(newBoard, state.variant ?? 'standard') || hasWon(newBoard)) {
     const cubeValue = state.doublingCube.value;
     const newMatchScore: [number, number] = [...state.matchScore];
     newMatchScore[state.currentPlayer] += cubeValue;

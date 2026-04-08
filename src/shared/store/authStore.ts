@@ -7,6 +7,9 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Profile } from '../lib/database.types';
 import type { User, Session } from '@supabase/supabase-js';
 
+let initializePromise: Promise<void> | null = null;
+let authListenerRegistered = false;
+
 interface AuthStore {
   user: User | null;
   session: Session | null;
@@ -31,27 +34,39 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   initialized: false,
 
   initialize: async () => {
-    if (!isSupabaseConfigured()) {
-      set({ initialized: true });
-      return;
-    }
+    if (get().initialized) return;
+    if (initializePromise) return initializePromise;
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      set({ user: session.user, session });
-      await get().fetchProfile();
-    }
-    set({ initialized: true });
-
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ user: session?.user ?? null, session });
-      if (session?.user) {
-        await get().fetchProfile();
-      } else {
-        set({ profile: null });
+    initializePromise = (async () => {
+      if (!isSupabaseConfigured()) {
+        set({ initialized: true });
+        return;
       }
-    });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        set({ user: session.user, session });
+        await get().fetchProfile();
+      }
+      set({ initialized: true });
+
+      if (!authListenerRegistered) {
+        supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+          set({ user: nextSession?.user ?? null, session: nextSession });
+          if (nextSession?.user) {
+            await get().fetchProfile();
+          } else {
+            set({ profile: null });
+          }
+        });
+        authListenerRegistered = true;
+      }
+    })();
+
+    if (!isSupabaseConfigured()) {
+      return initializePromise;
+    }
+    return initializePromise;
   },
 
   signInWithEmail: async (email, password) => {

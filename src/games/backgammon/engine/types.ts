@@ -3,6 +3,8 @@
  * This engine must run identically in browser main thread, Web Worker, and Deno (Supabase Edge Functions).
  */
 
+import type { VariantType } from './variants';
+
 /**
  * Board: 26-element number array.
  * Index 0-23: points (point 1 = index 0, point 24 = index 23, from current player's perspective).
@@ -21,6 +23,7 @@ export type Player = 0 | 1;
 
 export interface GameState {
   board: Board;
+  variant: VariantType;
   currentPlayer: Player;
   dice: number[];          // remaining dice to play (e.g. [3, 5] or [4, 4, 4, 4] for doubles)
   diceRolled: boolean;

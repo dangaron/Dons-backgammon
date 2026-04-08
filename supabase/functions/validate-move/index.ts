@@ -164,7 +164,7 @@ serve(async (req) => {
 
     // Validate and apply each die move sequentially
     let board = cloneBoard(game.board);
-    let remainingDice = [...game.dice];
+    const remainingDice = [...game.dice];
 
     for (const dm of die_moves) {
       if (!isLegalDieMove(board, dm)) {
