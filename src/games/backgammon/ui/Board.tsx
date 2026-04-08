@@ -16,7 +16,7 @@ import { BAR, HOME, OPP_BAR, pipCount, opponentPipCount, unflopBoard } from '../
 import { applySingleDieMove } from '../engine/moves';
 
 import { useTheme } from '../../../shared/lib/useTheme';
-import { loadBoardTheme, BOARD_THEMES } from '../lib/boardThemes';
+import { loadBoardTheme, saveBoardTheme, BOARD_THEMES, type BoardThemeName } from '../lib/boardThemes';
 
 // ── Dimensions ───────────────────────────────────────────────────────────────
 const BW = 680;
@@ -980,14 +980,8 @@ export function Board({ onChallenges, onNewGame, onDashboard, onQuit }: {
 
         <div style={{ flex: 1 }} />
 
-        {onDashboard && (
-          <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
-            onClick={onDashboard}>Online</button>
-        )}
-        {onChallenges && (
-          <button className="action-btn secondary" style={{ fontSize: 11, height: 30, padding: '0 10px' }}
-            onClick={onChallenges}>Puzzles</button>
-        )}
+        {/* Board theme picker */}
+        <ThemePicker />
 
         <span className="seed-label" onClick={() => setShowVerifyDialog(true)}>
           {prng.seed.toString(16).toUpperCase().padStart(8, '0')}
@@ -1064,5 +1058,74 @@ export function Board({ onChallenges, onNewGame, onDashboard, onQuit }: {
         </div>
       )}
     </>
+  );
+}
+
+// ── Theme Picker (inline in action bar) ─────────────────────────────────────
+
+function ThemePicker() {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState<BoardThemeName>(loadBoardTheme());
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        className="action-btn secondary"
+        onClick={() => setOpen(!open)}
+        style={{ fontSize: 11, height: 30, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+        title="Board Theme"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="8" cy="8" r="6" />
+          <path d="M8 2v12M2 8h12" />
+        </svg>
+        Theme
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute', bottom: '100%', right: 0, marginBottom: 8,
+            background: 'var(--surface)', border: '1px solid var(--glass-border)',
+            borderRadius: 14, padding: 12, width: 200,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            zIndex: 100,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+            Board Theme
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {Object.values(BOARD_THEMES).map(t => (
+              <button
+                key={t.name}
+                onClick={() => { setCurrent(t.name); saveBoardTheme(t.name); window.location.reload(); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 8px', borderRadius: 8, border: 'none',
+                  background: current === t.name ? 'var(--accent)18' : 'transparent',
+                  cursor: 'pointer', fontFamily: 'var(--font)',
+                  transition: 'background 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 28, height: 20, borderRadius: 4,
+                  background: t.preview,
+                  border: `1.5px solid ${current === t.name ? 'var(--accent)' : 'var(--glass-border)'}`,
+                  flexShrink: 0,
+                }} />
+                <span style={{
+                  fontSize: 11, fontWeight: current === t.name ? 700 : 500,
+                  color: current === t.name ? 'var(--accent)' : 'var(--text-muted)',
+                }}>
+                  {t.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

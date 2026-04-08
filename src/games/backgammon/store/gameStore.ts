@@ -129,8 +129,14 @@ function loadSaved(): { gameState: GameState | null; prng: PRNGState | null } {
 
 function save(gameState: GameState, prng: PRNGState) {
   try {
-    localStorage.setItem(STORAGE_KEY, serializeState(gameState));
-    localStorage.setItem(PRNG_STORAGE_KEY, JSON.stringify(prng));
+    if (gameState.turnPhase === 'game-over') {
+      // Game is finished — clear saved state so it never recurs
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PRNG_STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, serializeState(gameState));
+      localStorage.setItem(PRNG_STORAGE_KEY, JSON.stringify(prng));
+    }
   } catch { /* quota exceeded */ }
 }
 
