@@ -908,7 +908,7 @@ export function Board({ onChallenges, onNewGame: _onNewGame, onDashboard, onQuit
               });
 
               return (
-                <g opacity={0.6}>
+                <g opacity={0.6} style={{ pointerEvents: 'none' }}>
                   {arrows.map((a: { x1: number; y1: number; x2: number; y2: number }, i: number) => (
                     <g key={i}>
                       <line x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
