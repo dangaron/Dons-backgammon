@@ -13,13 +13,22 @@ Multi-game platform. Currently includes Backgammon and Solitaire (Klondike), wit
 - Challenge mode: curated positions, "find the best move"
 - Online multiplayer via Supabase (invite codes, real-time sync)
 
-### Solitaire (Klondike)
-- Classic Klondike solitaire with Draw-1 and Draw-3 modes
-- SVG card rendering with click-to-select, click-to-move interaction
-- Hint system (priority-based heuristic solver)
-- Auto-move: safe cards auto-play to foundations
-- Unlimited undo, scoring with time bonus
-- Stats tracking (games played/won, best time, win streaks)
+### Solitaire (5 Variants)
+- **Klondike** — Classic with Draw-1/Draw-3 modes
+- **Spider** — 1-suit, 2-suit, 4-suit difficulty; 2-deck, 10 columns
+- **FreeCell** — All cards visible, 4 free cells, nearly always solvable
+- **Pyramid** — Pair cards summing to 13, pyramid layout
+- **TriPeaks** — Clear 3 peaks with chain combos
+- SVG card rendering with click-to-select/click-to-move
+- Hint system, unlimited undo, auto-complete, auto-move to foundations
+- Per-variant statistics with trends, win rates, streaks
+- 30+ achievements across beginner, streak, speed, variant, and expert categories
+- Solitaire-specific settings (four-color deck, table color, card backs, zen mode, accessibility)
+- Game number system (reproducible deals via PRNG seed)
+- AI move analysis with post-game review and win probability estimation
+- Curated puzzle mode with hand-designed positions
+- Classic bouncing cards win animation (Windows 3.0 style)
+- Achievement toast notifications
 
 ### Yahtzee
 - 5 dice with click-to-hold interaction

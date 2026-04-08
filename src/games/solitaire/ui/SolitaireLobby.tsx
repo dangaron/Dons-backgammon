@@ -1,47 +1,41 @@
 /**
- * Solitaire lobby — new game, continue, stats, draw mode.
+ * Solitaire lobby — variant selector with stats and continue support.
  */
 
-import { useState } from 'react';
 import { useSolitaireStore } from '../store/gameStore';
-import type { DrawMode } from '../engine/types';
-import { Spade, ArrowLeft, Play, RotateCcw, Trophy } from 'lucide-react';
+import { VARIANTS, type SolitaireVariant } from '../engine/variants';
+import { Spade, ArrowLeft, Settings, Play, Trophy } from 'lucide-react';
 
 interface SolitaireLobbyProps {
-  onPlay: () => void;
+  onPlay: (variant: SolitaireVariant) => void;
   onBack: () => void;
+  onSettings: () => void;
 }
 
-export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
-  const { startNewGame, resumeGame, hasSavedGame, stats } = useSolitaireStore();
-  const [drawMode, setDrawMode] = useState<DrawMode>(1);
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: '#4ecdc4',
+  medium: '#f7b731',
+  hard: '#fc5c65',
+};
 
-  const handleNewGame = () => {
-    startNewGame(drawMode);
-    onPlay();
-  };
+export function SolitaireLobby({ onPlay, onBack, onSettings }: SolitaireLobbyProps) {
+  const { hasSavedGame, resumeGame, stats } = useSolitaireStore();
 
-  const handleContinue = () => {
-    resumeGame();
-    onPlay();
-  };
-
-  const winRate = stats.gamesPlayed > 0
+  const totalWinRate = stats.gamesPlayed > 0
     ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
     : 0;
 
-  const formatTime = (secs: number | null) => {
-    if (secs === null) return '--:--';
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+  const handleContinue = () => {
+    resumeGame();
+    onPlay('klondike');
   };
 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', flex: 1, padding: 20,
+      flex: 1, padding: 20, paddingTop: 56,
       background: 'var(--bg)',
+      overflow: 'auto',
     }}>
       {/* Back button */}
       <button
@@ -53,13 +47,29 @@ export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
           color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
           fontFamily: 'var(--font)', fontWeight: 600,
           display: 'flex', alignItems: 'center', gap: 5,
+          zIndex: 10,
         }}
       >
         <ArrowLeft size={14} /> All Games
       </button>
 
+      {/* Settings gear */}
+      <button
+        onClick={onSettings}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          background: 'var(--surface)', border: '1px solid var(--glass-border)',
+          borderRadius: 10, padding: '6px 10px',
+          color: 'var(--text-muted)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10,
+        }}
+      >
+        <Settings size={16} />
+      </button>
+
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: 28, animation: 'slide-up 0.6s ease-out' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24, animation: 'slide-up 0.6s ease-out' }}>
         <div style={{
           marginBottom: 12, color: 'var(--accent)',
           animation: 'float 3s ease-in-out infinite',
@@ -77,17 +87,16 @@ export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
           fontSize: 14, color: 'var(--text-muted)', margin: 0,
           fontWeight: 600, fontStyle: 'italic',
         }}>
-          Classic Klondike
+          Choose your variant
         </p>
       </div>
 
-      {/* Menu */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', gap: 10,
-        width: '100%', maxWidth: 360,
-      }}>
-        {/* Continue button */}
-        {hasSavedGame && (
+      {/* Continue button */}
+      {hasSavedGame && (
+        <div style={{
+          width: '100%', maxWidth: 360, marginBottom: 12,
+          animation: 'slide-up 0.5s ease-out 0.05s both',
+        }}>
           <button
             className="game-card"
             onClick={handleContinue}
@@ -98,7 +107,6 @@ export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
               display: 'flex', alignItems: 'stretch',
               textAlign: 'left', fontFamily: 'var(--font)',
               overflow: 'hidden',
-              animation: 'slide-up 0.5s ease-out 0.1s both',
             }}
           >
             <div style={{
@@ -107,110 +115,59 @@ export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
             }} />
             <div style={{
               display: 'flex', alignItems: 'center', gap: 14,
-              padding: '16px 16px 16px 14px', flex: 1,
+              padding: '14px 16px 14px 14px', flex: 1,
             }}>
               <div style={{
-                width: 46, height: 46, borderRadius: 14,
+                width: 42, height: 42, borderRadius: 12,
                 background: 'var(--player)18', color: 'var(--player)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Play size={22} />
+                <Play size={20} />
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>Continue Game</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>Resume where you left off</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Resume where you left off</div>
               </div>
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: 'var(--text-dim)' }}>
+                <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
           </button>
-        )}
-
-        {/* New Game button */}
-        <button
-          className="game-card"
-          onClick={handleNewGame}
-          style={{
-            width: '100%', padding: 0,
-            background: 'var(--surface)', border: '1px solid var(--glass-border)',
-            borderRadius: 16, cursor: 'pointer',
-            display: 'flex', alignItems: 'stretch',
-            textAlign: 'left', fontFamily: 'var(--font)',
-            overflow: 'hidden',
-            animation: `slide-up 0.5s ease-out ${hasSavedGame ? 0.18 : 0.1}s both`,
-          }}
-        >
-          <div style={{
-            width: 5, flexShrink: 0,
-            background: 'linear-gradient(180deg, var(--accent), var(--accent)88)',
-          }} />
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            padding: '16px 16px 16px 14px', flex: 1,
-          }}>
-            <div style={{
-              width: 46, height: 46, borderRadius: 14,
-              background: 'var(--accent)18', color: 'var(--accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <RotateCcw size={22} />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>New Game</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>Start a fresh deal</div>
-            </div>
-          </div>
-        </button>
-
-        {/* Draw mode toggle */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px',
-          background: 'var(--surface)', border: '1px solid var(--glass-border)',
-          borderRadius: 14,
-          animation: 'slide-up 0.5s ease-out 0.26s both',
-        }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Draw Mode</div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-              {drawMode === 1 ? 'Easier — flip one card' : 'Harder — flip three cards'}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {([1, 3] as DrawMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => setDrawMode(mode)}
-                style={{
-                  padding: '6px 14px', borderRadius: 8, border: 'none',
-                  background: drawMode === mode ? 'var(--accent)' : 'var(--surface-2)',
-                  color: drawMode === mode ? '#fff' : 'var(--text-muted)',
-                  fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                  fontFamily: 'var(--font)',
-                  transition: 'all 0.2s',
-                }}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
         </div>
+      )}
+
+      {/* Variant cards grid */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: 10,
+        width: '100%', maxWidth: 360,
+      }}>
+        {VARIANTS.map((variant, i) => (
+          <VariantCard
+            key={variant.id}
+            variant={variant}
+            index={i}
+            stats={stats}
+            onClick={() => onPlay(variant.id)}
+          />
+        ))}
       </div>
 
-      {/* Stats */}
+      {/* Overall stats */}
       {stats.gamesPlayed > 0 && (
         <div style={{
-          marginTop: 24, animation: 'slide-up 0.5s ease-out 0.34s both',
+          marginTop: 28, animation: 'slide-up 0.5s ease-out 0.5s both',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
             marginBottom: 12, color: 'var(--text-muted)', fontSize: 12, fontWeight: 700,
           }}>
-            <Trophy size={14} /> Your Stats
+            <Trophy size={14} /> Overall Stats
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <StatBadge value={stats.gamesPlayed} label="Played" icon="🃏" />
             <StatBadge value={stats.gamesWon} label="Won" icon="🏆" />
-            <StatBadge value={winRate} label="Win %" suffix="%" icon="🔥" />
-            <StatBadge value={formatTime(stats.bestTime)} label="Best" icon="⏱" />
+            <StatBadge value={totalWinRate} label="Win %" suffix="%" icon="🔥" />
+            <StatBadge value={stats.currentStreak} label="Streak" icon="⚡" />
           </div>
         </div>
       )}
@@ -218,15 +175,113 @@ export function SolitaireLobby({ onPlay, onBack }: SolitaireLobbyProps) {
   );
 }
 
+function VariantCard({ variant, index, stats, onClick }: {
+  variant: typeof VARIANTS[number];
+  index: number;
+  stats: { gamesPlayed: number; gamesWon: number };
+  onClick: () => void;
+}) {
+  const winRate = stats.gamesPlayed > 0
+    ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
+    : null;
+
+  return (
+    <button
+      className="game-card"
+      onClick={onClick}
+      style={{
+        width: '100%', padding: 0,
+        background: 'var(--surface)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 16, cursor: 'pointer',
+        display: 'flex', alignItems: 'stretch',
+        textAlign: 'left', fontFamily: 'var(--font)',
+        position: 'relative', overflow: 'hidden',
+        animation: `slide-up 0.5s ease-out ${index * 0.08 + 0.1}s both`,
+      }}
+    >
+      {/* Left accent bar */}
+      <div style={{
+        width: 5, flexShrink: 0,
+        background: `linear-gradient(180deg, ${variant.color}, ${variant.color}88)`,
+      }} />
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '16px 16px 16px 14px', flex: 1,
+      }}>
+        {/* Icon circle */}
+        <div style={{
+          width: 46, height: 46, borderRadius: 14,
+          background: variant.color + '18',
+          color: variant.color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          fontSize: 22,
+          boxShadow: `0 0 20px ${variant.color}15`,
+        }}>
+          {variant.icon}
+        </div>
+
+        {/* Text content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: 15, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            {variant.name}
+
+            {/* Difficulty badge */}
+            <span style={{
+              fontSize: 9, fontWeight: 800, padding: '2px 7px',
+              borderRadius: 6, letterSpacing: 0.8, textTransform: 'uppercase',
+              background: DIFFICULTY_COLORS[variant.difficulty] + '20',
+              color: DIFFICULTY_COLORS[variant.difficulty],
+            }}>
+              {variant.difficulty}
+            </span>
+          </div>
+
+          <div style={{
+            fontSize: 12, color: 'var(--text-muted)', marginTop: 3, fontWeight: 500,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            {variant.description}
+
+            {/* Win rate stat */}
+            {winRate !== null && (
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                color: 'var(--text-dim)',
+                whiteSpace: 'nowrap',
+              }}>
+                {winRate}% win
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Chevron */}
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, color: 'var(--text-dim)' }}>
+          <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    </button>
+  );
+}
+
 function StatBadge({ value, label, suffix, icon }: {
   value: number | string; label: string; suffix?: string; icon: string;
 }) {
   return (
-    <div style={{
-      textAlign: 'center',
-      background: 'var(--surface)', border: '1px solid var(--glass-border)',
-      borderRadius: 14, padding: '10px 14px', minWidth: 60,
-    }}>
+    <div
+      className="stat-badge"
+      style={{
+        textAlign: 'center',
+        background: 'var(--surface)', border: '1px solid var(--glass-border)',
+        borderRadius: 14, padding: '10px 14px', minWidth: 60,
+      }}
+    >
       <div style={{ fontSize: 13, marginBottom: 2 }}>{icon}</div>
       <div style={{
         fontSize: 18, fontWeight: 900, color: 'var(--text)',

@@ -8,7 +8,9 @@ import { HomeScreen } from './shared/ui/HomeScreen';
 import { SettingsScreen } from './shared/ui/SettingsScreen';
 import { GameSelector } from './shared/ui/GameSelector';
 import { SolitaireLobby } from './games/solitaire/ui/SolitaireLobby';
-import { SolitaireBoard } from './games/solitaire/ui/SolitaireBoard';
+import { SolitaireRouter } from './games/solitaire/ui/SolitaireRouter';
+import { SolitaireSettings } from './games/solitaire/ui/SolitaireSettings';
+import { useSolitaireStore } from './games/solitaire/store/gameStore';
 import { YahtzeeLobby } from './games/yahtzee/ui/YahtzeeLobby';
 import { YahtzeeBoard } from './games/yahtzee/ui/YahtzeeBoard';
 import { BridgeLobby } from './games/bridge/ui/BridgeLobby';
@@ -31,6 +33,7 @@ type AppView =
   // Solitaire views
   | 'solitaire-lobby'
   | 'solitaire-play'
+  | 'solitaire-settings'
   // Yahtzee views
   | 'yahtzee-lobby'
   | 'yahtzee-play'
@@ -178,13 +181,21 @@ export default function App() {
 
       {view === 'solitaire-lobby' && (
         <SolitaireLobby
-          onPlay={() => setView('solitaire-play')}
+          onPlay={(variant) => {
+            useSolitaireStore.getState().startNewGame(variant);
+            setView('solitaire-play');
+          }}
           onBack={() => setView('game-select')}
+          onSettings={() => setView('solitaire-settings')}
         />
       )}
 
       {view === 'solitaire-play' && (
-        <SolitaireBoard onQuit={() => setView('solitaire-lobby')} />
+        <SolitaireRouter onQuit={() => setView('solitaire-lobby')} />
+      )}
+
+      {view === 'solitaire-settings' && (
+        <SolitaireSettings onBack={() => setView('solitaire-lobby')} />
       )}
 
       {/* ── Yahtzee views ────────────────────────────────────────── */}
